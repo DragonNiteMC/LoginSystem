@@ -1,0 +1,3 @@
+session-expire: 60
+times-failed-kick: 3
+sec-failed-kick: 60
