@@ -1,11 +1,19 @@
 package com.ericlam.mc.loginsystem.managers;
 
+import com.ericlam.mc.loginsystem.RedisManager;
+import com.ericlam.mc.loginsystem.exceptions.AccountNonExistException;
+import com.ericlam.mc.loginsystem.exceptions.AlreadyRegisteredException;
 import com.hypernite.mc.hnmc.core.main.HyperNiteMC;
 import com.hypernite.mc.hnmc.core.managers.SQLDataSource;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.craftbukkit.libs.org.apache.commons.codec.binary.Base64;
 import org.bukkit.plugin.Plugin;
+import redis.clients.jedis.Jedis;
 
 import javax.annotation.Nonnull;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,6 +45,64 @@ public class PasswordManager {
 
     private Map<UUID, String> passwordMap = new Hashtable<>();
 
+
+    static String hashing(String password) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] pw = password.getBytes();
+        byte[] hashed = digest.digest(pw);
+        return Base64.encodeBase64String(hashed);
+    }
+
+    public boolean register(@Nonnull OfflinePlayer player, final String password) throws AlreadyRegisteredException {
+        try {
+            String encoded = hashing(password);
+            try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("INSERT IGNORE INTO `LoginData` VALUES  (?,?,?)")) {
+                statement.setString(1, player.getUniqueId().toString());
+                statement.setString(2, player.getName());
+                statement.setString(3, encoded);
+                int result = statement.executeUpdate();
+                if (result == 0) throw new AlreadyRegisteredException();
+                return true;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean editPassword(@Nonnull OfflinePlayer player, final String password) throws AccountNonExistException {
+        try {
+            final String encoded = hashing(password);
+            try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("UPDATE `LoginDaa` SET `Name`=?, `Password`=? WHERE `PlayerUUID`=?")) {
+                statement.setString(1, player.getName());
+                statement.setString(2, encoded);
+                statement.setString(3, player.getUniqueId().toString());
+                int result = statement.executeUpdate();
+                if (result == 0) throw new AccountNonExistException();
+                return true;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean unregister(UUID uuid) throws AccountNonExistException {
+        try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("DELETE FROM `LoginData` WHERE `UUID`=?")) {
+            statement.setString(1, uuid.toString());
+            int result = statement.executeUpdate();
+            if (result == 0) throw new AccountNonExistException();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     @Nonnull
     public String getPasswordHash(UUID uuid){
         return Optional.ofNullable(passwordMap.get(uuid)).orElseGet(()-> {
@@ -49,6 +115,12 @@ public class PasswordManager {
             }
             return "";
         });
+    }
+
+    public boolean needLogin(UUID uuid) {
+        try (Jedis redis = RedisManager.getInstance().getRedis()) {
+            return Boolean.parseBoolean(redis.hget(uuid.toString(), "premium"));
+        }
     }
 
 

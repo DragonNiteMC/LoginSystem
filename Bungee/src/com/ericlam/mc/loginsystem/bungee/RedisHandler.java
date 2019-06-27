@@ -21,7 +21,7 @@ public class RedisHandler {
 
     public void passLogin(UUID uuid){
         try(Jedis redis = RedisManager.getInstance().getRedis()){
-            redis.publish("Vote-Slave", "LOGIN-PASS_"+uuid.toString());
+            redis.publish("Login-Slave", "LOGIN-PASS_" + uuid.toString());
         }
     }
 }
