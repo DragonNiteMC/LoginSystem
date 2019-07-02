@@ -1,5 +1,7 @@
 package com.ericlam.mc.loginsystem.managers;
 
+import com.hypernite.mc.hnmc.core.managers.ConfigManager;
+
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Hashtable;
@@ -7,18 +9,24 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-public class SessionManager {
+class SessionManager {
     private Map<UUID, Timestamp> sessionMap = new Hashtable<>();
 
-    public boolean isExpired(UUID uuid){
+    private int sessionMins;
+
+    SessionManager(ConfigManager configManager){
+        this.sessionMins = configManager.getData("em", Integer.class).orElse(60);
+    }
+
+    boolean isExpired(UUID uuid){
         return Optional.ofNullable(this.sessionMap.get(uuid)).map(ts->ts.after(Timestamp.from(Instant.now()))).orElse(true);
     }
 
-    public void addSession(UUID uuid){
-        this.sessionMap.put(uuid, Timestamp.from(Instant.now()));
+    void addSession(UUID uuid){
+        this.sessionMap.put(uuid, Timestamp.from(Instant.now().plusSeconds(60 * sessionMins)));
     }
 
-    public void clearSession(UUID uuid){
+    void clearSession(UUID uuid){
         this.sessionMap.remove(uuid);
     }
 

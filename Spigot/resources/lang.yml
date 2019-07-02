@@ -1,0 +1,16 @@
+prefix: "&6登入系統// &7"
+not-logged-in: "尚未登入!"
+kick-timeout: "&c登入逾時"
+kick-fail: "&c登入失敗次數過多"
+logged-in: "&a你已成功登入。"
+logged-fail: "&c登入失敗。"
+operation:
+  yes: "&a操作成功。"
+  no: "&c操作失敗。"
+error:
+  ac-no-exist: "&e賬號不存在。"
+  already-logged: "&a你已經登入過了。"
+  pw-failed: "你所輸入的密碼兩者不一致。"
+  already-registered: "&c你已經註冊過了。"
+  same-pw: "&c你所輸入的舊密碼和新密碼是一致的"
+  wrong-pw: "&c你所輸入的密碼錯誤。"

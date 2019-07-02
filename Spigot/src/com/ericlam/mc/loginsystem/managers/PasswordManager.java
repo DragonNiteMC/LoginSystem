@@ -29,13 +29,14 @@ import java.util.logging.Level;
 public class PasswordManager {
 
     private SQLDataSource sqlDataSource;
+    private Map<UUID, String> passwordMap = new Hashtable<>();
 
-    public PasswordManager(Plugin plugin){
+    PasswordManager(Plugin plugin) {
         this.sqlDataSource = HyperNiteMC.getAPI().getSQLDataSource();
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, ()->{
-            try(Connection connection = sqlDataSource.getConnection();
-                PreparedStatement statement = connection.prepareStatement(
-                        "CREATE TABLE IF NOT EXISTS `LoginData` (UUID VARCHAR(40) NOT NULL PRIMARY KEY, Name TINYTEXT NOT NULL, Password LONGTEXT NOT NULL )")) {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (Connection connection = sqlDataSource.getConnection();
+                 PreparedStatement statement = connection.prepareStatement(
+                         "CREATE TABLE IF NOT EXISTS `LoginData` (UUID VARCHAR(40) NOT NULL PRIMARY KEY, Name TINYTEXT NOT NULL, Password LONGTEXT NOT NULL )")) {
                 statement.execute();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -43,59 +44,59 @@ public class PasswordManager {
         });
     }
 
-    private Map<UUID, String> passwordMap = new Hashtable<>();
-
-
-    static String hashing(String password) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] pw = password.getBytes();
-        byte[] hashed = digest.digest(pw);
-        return Base64.encodeBase64String(hashed);
+    static String hashing(String password) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] pw = password.getBytes();
+            byte[] hashed = digest.digest(pw);
+            return Base64.encodeBase64String(hashed);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 
-    public boolean register(@Nonnull OfflinePlayer player, final String password) throws AlreadyRegisteredException {
-        try {
-            String encoded = hashing(password);
-            try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("INSERT IGNORE INTO `LoginData` VALUES  (?,?,?)")) {
-                statement.setString(1, player.getUniqueId().toString());
-                statement.setString(2, player.getName());
-                statement.setString(3, encoded);
-                int result = statement.executeUpdate();
-                if (result == 0) throw new AlreadyRegisteredException();
-                return true;
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        } catch (NoSuchAlgorithmException e) {
+    boolean register(@Nonnull OfflinePlayer player, final String password) {
+        if (passwordMap.containsKey(player.getUniqueId())) throw new AlreadyRegisteredException();
+        final String encoded = hashing(password);
+        try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("INSERT IGNORE INTO `LoginData` VALUES  (?,?,?)")) {
+            statement.setString(1, player.getUniqueId().toString());
+            statement.setString(2, player.getName());
+            statement.setString(3, encoded);
+            int result = statement.executeUpdate();
+            if (result == 0) throw new AlreadyRegisteredException();
+            passwordMap.putIfAbsent(player.getUniqueId(), encoded);
+            return true;
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return false;
     }
 
-    public boolean editPassword(@Nonnull OfflinePlayer player, final String password) throws AccountNonExistException {
-        try {
-            final String encoded = hashing(password);
-            try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("UPDATE `LoginDaa` SET `Name`=?, `Password`=? WHERE `PlayerUUID`=?")) {
-                statement.setString(1, player.getName());
-                statement.setString(2, encoded);
-                statement.setString(3, player.getUniqueId().toString());
-                int result = statement.executeUpdate();
-                if (result == 0) throw new AccountNonExistException();
-                return true;
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        } catch (NoSuchAlgorithmException e) {
+    boolean editPassword(@Nonnull OfflinePlayer player, final String password){
+        if (!passwordMap.containsKey(player.getUniqueId())) throw new AccountNonExistException();
+        final String encoded = hashing(password);
+        try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("UPDATE `LoginDaa` SET `Name`=?, `Password`=? WHERE `PlayerUUID`=?")) {
+            statement.setString(1, player.getName());
+            statement.setString(2, encoded);
+            statement.setString(3, player.getUniqueId().toString());
+            int result = statement.executeUpdate();
+            if (result == 0) throw new AccountNonExistException();
+            this.passwordMap.put(player.getUniqueId(), encoded);
+            return true;
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return false;
     }
 
-    public boolean unregister(UUID uuid) throws AccountNonExistException {
+    boolean unregister(UUID uuid) {
+        if (!passwordMap.containsKey(uuid)) throw new AccountNonExistException();
         try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("DELETE FROM `LoginData` WHERE `UUID`=?")) {
             statement.setString(1, uuid.toString());
             int result = statement.executeUpdate();
             if (result == 0) throw new AccountNonExistException();
+            passwordMap.remove(uuid);
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -104,37 +105,38 @@ public class PasswordManager {
     }
 
     @Nonnull
-    public String getPasswordHash(UUID uuid){
-        return Optional.ofNullable(passwordMap.get(uuid)).orElseGet(()-> {
+    String getPasswordHash(UUID uuid) {
+        return Optional.ofNullable(passwordMap.get(uuid)).orElseGet(() -> {
             try {
-                Optional<String> str =  this.getFromSQL(uuid).get();
-                if (str.isEmpty()) Bukkit.getLogger().log(Level.SEVERE, "The password of "+uuid+" is null, maybe premium player? ");
+                Optional<String> str = this.getFromSQL(uuid).get();
+                if (str.isEmpty())
+                    Bukkit.getLogger().log(Level.SEVERE, "The password of " + uuid + " is null, maybe premium player? ");
                 else return str.get();
             } catch (InterruptedException | ExecutionException e) {
-                Bukkit.getLogger().log(Level.SEVERE, "Error while getting "+uuid+" password: "+e.getLocalizedMessage());
+                Bukkit.getLogger().log(Level.SEVERE, "Error while getting " + uuid + " password: " + e.getLocalizedMessage());
             }
             return "";
         });
     }
 
-    public boolean needLogin(UUID uuid) {
+    boolean isPremium(UUID uuid) {
         try (Jedis redis = RedisManager.getInstance().getRedis()) {
             return Boolean.parseBoolean(redis.hget(uuid.toString(), "premium"));
         }
     }
 
 
-    public CompletableFuture<Optional<String>> getFromSQL(UUID uuid){
-        return CompletableFuture.supplyAsync(()->{
-            if (passwordMap.containsKey(uuid)){
+    CompletableFuture<Optional<String>> getFromSQL(UUID uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            if (passwordMap.containsKey(uuid)) {
                 return Optional.of(passwordMap.get(uuid));
             }
             String result = null;
-            try(Connection connection = sqlDataSource.getConnection();
-            PreparedStatement statement = connection.prepareStatement("SELECT `Password` FROM `LoginData` WHERE `UUID`=?")){
+            try (Connection connection = sqlDataSource.getConnection();
+                 PreparedStatement statement = connection.prepareStatement("SELECT `Password` FROM `LoginData` WHERE `UUID`=?")) {
                 statement.setString(1, uuid.toString());
                 ResultSet set = statement.executeQuery();
-                if (set.next()){
+                if (set.next()) {
                     String pwHash = set.getString("Password");
                     this.passwordMap.put(uuid, pwHash);
                     result = pwHash;

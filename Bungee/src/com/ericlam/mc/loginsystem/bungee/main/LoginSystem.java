@@ -4,12 +4,12 @@ import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
 import com.ericlam.mc.bungee.hnmc.events.PlayerVerifyCompletedEvent;
 import com.ericlam.mc.loginsystem.bungee.RedisHandler;
 import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.event.ServerSwitchEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.event.EventHandler;
 
-import java.lang.reflect.Proxy;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -23,6 +23,7 @@ public class LoginSystem extends Plugin implements Listener {
     @Override
     public void onEnable() {
         this.handler = new RedisHandler();
+        this.getProxy().getPluginManager().registerListener(this, this);
     }
 
 
@@ -33,6 +34,11 @@ public class LoginSystem extends Plugin implements Listener {
         CompletableFuture.supplyAsync(()->handler.commitPlayer(player.getUniqueId(), player.isPremium())).whenCompleteAsync((b,ex)->{
             if (b) cached.add(player.getUniqueId());
         });
+    }
+
+    @EventHandler
+    public void onPlayerConnect(ServerConnectEvent e) {
+
     }
 
     @EventHandler
