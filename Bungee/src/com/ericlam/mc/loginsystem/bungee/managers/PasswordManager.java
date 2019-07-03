@@ -16,22 +16,26 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Base64;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 
 public class PasswordManager {
 
     private SQLDataSource sqlDataSource;
-    private Map<UUID, String> passwordMap = new Hashtable<>();
+    private Map<UUID, String> passwordMap = new ConcurrentHashMap<>();
 
     PasswordManager(Plugin plugin) {
         this.sqlDataSource = HyperNiteMC.getAPI().getSQLDataSource();
         ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
             try (Connection connection = sqlDataSource.getConnection();
                  PreparedStatement statement = connection.prepareStatement(
-                         "CREATE TABLE IF NOT EXISTS `LoginData` (UUID VARCHAR(40) NOT NULL PRIMARY KEY, Name TINYTEXT NOT NULL, Password LONGTEXT NOT NULL )")) {
+                         "CREATE TABLE IF NOT EXISTS `LoginData` (UUID VARCHAR(40) NOT NULL PRIMARY KEY, Name TINYTEXT NOT NULL, Password LONGTEXT NOT NULL, IP TINYTEXT NOT NULL )")) {
                 statement.execute();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -54,10 +58,11 @@ public class PasswordManager {
     boolean register(ProxiedPlayer player, final String password) {
         if (passwordMap.containsKey(player.getUniqueId())) throw new AlreadyRegisteredException();
         final String encoded = hashing(password);
-        try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("INSERT IGNORE INTO `LoginData` VALUES  (?,?,?)")) {
+        try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("INSERT IGNORE INTO `LoginData` VALUES  (?,?,?,?)")) {
             statement.setString(1, player.getUniqueId().toString());
             statement.setString(2, player.getName());
             statement.setString(3, encoded);
+            statement.setString(4, player.getAddress().getHostName());
             int result = statement.executeUpdate();
             if (result == 0) throw new AlreadyRegisteredException();
             passwordMap.putIfAbsent(player.getUniqueId(), encoded);

@@ -4,13 +4,13 @@ import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 class SessionManager {
-    private Map<UUID, Timestamp> sessionMap = new Hashtable<>();
+    private Map<UUID, Timestamp> sessionMap = new ConcurrentHashMap<>();
 
     private int sessionMins;
 

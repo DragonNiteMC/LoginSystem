@@ -21,6 +21,13 @@ public class LoginConfig extends ConfigSetter {
     @Extract
     private String lobby;
 
+    @Extract(name = "mapi")
+    private int maxAcPerIP;
+
+
+    @Extract(name = "mlpi")
+    private int maxLoginPerIP;
+
     public LoginConfig(Plugin plugin) {
         super(plugin, "config.yml", "lang.yml");
     }
@@ -32,5 +39,7 @@ public class LoginConfig extends ConfigSetter {
         this.timesBeforeFail = config.getInt("times-failed-kick");
         this.secBeforeFail = config.getInt("sec-failed-kick");
         this.lobby = config.getString("lobby");
+        this.maxAcPerIP = config.getInt("max-ac-per-ip");
+        this.maxLoginPerIP = config.getInt("max-login-per-ip");
     }
 }

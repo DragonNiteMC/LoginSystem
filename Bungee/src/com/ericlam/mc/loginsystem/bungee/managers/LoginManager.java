@@ -8,30 +8,57 @@ import com.ericlam.mc.loginsystem.bungee.events.PlayerLoggedEvent;
 import com.ericlam.mc.loginsystem.bungee.exceptions.*;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 
 public class LoginManager {
 
-    private PasswordManager passwordManager;
-    private SessionManager sessionManager;
-    private ConfigManager configManager;
-    private Set<UUID> premiums = new HashSet<>();
-    private Map<UUID, Integer> failMap = new Hashtable<>();
-    private Plugin plugin;
+    private final PasswordManager passwordManager;
+    private final SessionManager sessionManager;
+    private final ConfigManager configManager;
+    private final IPManager ipManager;
+    private final Plugin plugin;
+    private Map<UUID, Integer> failMap = new HashMap<>();
+    private Map<UUID, String> ipMap = new ConcurrentHashMap<>();
 
     public LoginManager(Plugin plugin, ConfigManager configManager) {
         this.plugin = plugin;
         this.configManager = configManager;
         this.passwordManager = new PasswordManager(plugin);
         this.sessionManager = new SessionManager(configManager);
+        this.ipManager = new IPManager();
+    }
+
+    public CompletableFuture<String> forceUpdateIP(PendingConnection player) {
+        return CompletableFuture.supplyAsync(() -> ipManager.updateIP(player));
+    }
+
+    public CompletableFuture<Boolean> isMaxAccount(PendingConnection connection) {
+        final String ip = connection.getAddress().getHostName();
+        return CompletableFuture.supplyAsync(() -> ipManager.checkAccount(ip)).thenApply(i -> i >= configManager.getData("mapi", Integer.class).orElse(3));
+    }
+
+    public void updateIPTask(PendingConnection player) {
+        if (ipMap.containsKey(player.getUniqueId())) return;
+        this.forceUpdateIP(player).thenAccept(ip -> this.ipMap.put(player.getUniqueId(), ip)).whenComplete((v, ex) -> {
+            if (ex != null) {
+                ex.printStackTrace();
+                ProxyServer.getInstance().getLogger().log(Level.SEVERE, ex.getMessage());
+                return;
+            }
+            ProxyServer.getInstance().getLogger().info("IP Task update completed.");
+        });
     }
 
     public CompletableFuture<Boolean> isPremium(UUID player) {
-        if (premiums.contains(player)) return CompletableFuture.completedFuture(true);
         return HyperNiteMC.getAPI().getPlayerManager().getOfflinePlayer(player).handleAsync((offlinePlayer, throwable) -> {
             if (throwable != null) {
                 throwable.printStackTrace();
@@ -84,7 +111,6 @@ public class LoginManager {
     public void login(ProxiedPlayer player, final String password) {
         UUID uuid = player.getUniqueId();
         if (!sessionManager.isExpired(uuid)) throw new AlreadyLoggedException();
-        PasswordManager.hashing(password);
         String expected = passwordManager.getPasswordHash(uuid);
         if (expected.isBlank()) throw new AccountNonExistException();
         ResultParser.check(() -> PasswordManager.hashing(password).equals(expected)).ifTrue(() -> this.passLogin(player)).ifFalse(()-> {
