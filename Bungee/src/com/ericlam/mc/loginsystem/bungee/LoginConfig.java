@@ -1,11 +1,11 @@
-package com.ericlam.mc.loginsystem;
+package com.ericlam.mc.loginsystem.bungee;
 
-import com.hypernite.mc.hnmc.core.config.ConfigSetter;
-import com.hypernite.mc.hnmc.core.config.Extract;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.plugin.Plugin;
+import com.ericlam.mc.bungee.hnmc.config.ConfigSetter;
+import com.ericlam.mc.bungee.hnmc.config.Extract;
+import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.config.Configuration;
 
-import java.util.Map;
+import java.util.HashMap;
 
 public class LoginConfig extends ConfigSetter {
 
@@ -18,15 +18,19 @@ public class LoginConfig extends ConfigSetter {
     @Extract(name = "sbf")
     private int secBeforeFail;
 
+    @Extract
+    private String lobby;
+
     public LoginConfig(Plugin plugin) {
         super(plugin, "config.yml", "lang.yml");
     }
 
     @Override
-    public void loadConfig(Map<String, FileConfiguration> map) {
-        FileConfiguration config = map.get("config.yml");
+    public void loadConfig(HashMap<String, Configuration> hashMap) {
+        Configuration config = hashMap.get("config.yml");
         this.expireMins = config.getInt("session-expire");
         this.timesBeforeFail = config.getInt("times-failed-kick");
         this.secBeforeFail = config.getInt("sec-failed-kick");
+        this.lobby = config.getString("lobby");
     }
 }

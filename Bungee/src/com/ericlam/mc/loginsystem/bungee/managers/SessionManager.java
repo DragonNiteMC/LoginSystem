@@ -1,6 +1,6 @@
-package com.ericlam.mc.loginsystem.managers;
+package com.ericlam.mc.loginsystem.bungee.managers;
 
-import com.hypernite.mc.hnmc.core.managers.ConfigManager;
+import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
 
 import java.sql.Timestamp;
 import java.time.Instant;

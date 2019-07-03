@@ -1,4 +1,4 @@
-package com.ericlam.mc.loginsystem.exceptions;
+package com.ericlam.mc.loginsystem.bungee.exceptions;
 
 public class ConfirmPasswordFailedException extends AuthException{
     @Override

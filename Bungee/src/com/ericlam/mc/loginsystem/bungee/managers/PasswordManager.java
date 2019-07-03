@@ -1,27 +1,22 @@
-package com.ericlam.mc.loginsystem.managers;
+package com.ericlam.mc.loginsystem.bungee.managers;
 
+import com.ericlam.mc.bungee.hnmc.SQLDataSource;
+import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
 import com.ericlam.mc.loginsystem.RedisManager;
-import com.ericlam.mc.loginsystem.exceptions.AccountNonExistException;
-import com.ericlam.mc.loginsystem.exceptions.AlreadyRegisteredException;
-import com.hypernite.mc.hnmc.core.main.HyperNiteMC;
-import com.hypernite.mc.hnmc.core.managers.SQLDataSource;
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.craftbukkit.libs.org.apache.commons.codec.binary.Base64;
-import org.bukkit.plugin.Plugin;
+import com.ericlam.mc.loginsystem.bungee.exceptions.AccountNonExistException;
+import com.ericlam.mc.loginsystem.bungee.exceptions.AlreadyRegisteredException;
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.plugin.Plugin;
 import redis.clients.jedis.Jedis;
 
-import javax.annotation.Nonnull;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
@@ -33,7 +28,7 @@ public class PasswordManager {
 
     PasswordManager(Plugin plugin) {
         this.sqlDataSource = HyperNiteMC.getAPI().getSQLDataSource();
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
             try (Connection connection = sqlDataSource.getConnection();
                  PreparedStatement statement = connection.prepareStatement(
                          "CREATE TABLE IF NOT EXISTS `LoginData` (UUID VARCHAR(40) NOT NULL PRIMARY KEY, Name TINYTEXT NOT NULL, Password LONGTEXT NOT NULL )")) {
@@ -49,14 +44,14 @@ public class PasswordManager {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] pw = password.getBytes();
             byte[] hashed = digest.digest(pw);
-            return Base64.encodeBase64String(hashed);
+            return Base64.getEncoder().encodeToString(hashed);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             return "";
         }
     }
 
-    boolean register(@Nonnull OfflinePlayer player, final String password) {
+    boolean register(ProxiedPlayer player, final String password) {
         if (passwordMap.containsKey(player.getUniqueId())) throw new AlreadyRegisteredException();
         final String encoded = hashing(password);
         try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("INSERT IGNORE INTO `LoginData` VALUES  (?,?,?)")) {
@@ -73,16 +68,16 @@ public class PasswordManager {
         return false;
     }
 
-    boolean editPassword(@Nonnull OfflinePlayer player, final String password){
-        if (!passwordMap.containsKey(player.getUniqueId())) throw new AccountNonExistException();
+    boolean editPassword(UUID uuid, String name, final String password) {
+        if (!passwordMap.containsKey(uuid)) throw new AccountNonExistException();
         final String encoded = hashing(password);
         try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("UPDATE `LoginDaa` SET `Name`=?, `Password`=? WHERE `PlayerUUID`=?")) {
-            statement.setString(1, player.getName());
+            statement.setString(1, name);
             statement.setString(2, encoded);
-            statement.setString(3, player.getUniqueId().toString());
+            statement.setString(3, uuid.toString());
             int result = statement.executeUpdate();
             if (result == 0) throw new AccountNonExistException();
-            this.passwordMap.put(player.getUniqueId(), encoded);
+            this.passwordMap.put(uuid, encoded);
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -104,16 +99,15 @@ public class PasswordManager {
         return false;
     }
 
-    @Nonnull
     String getPasswordHash(UUID uuid) {
         return Optional.ofNullable(passwordMap.get(uuid)).orElseGet(() -> {
             try {
                 Optional<String> str = this.getFromSQL(uuid).get();
                 if (str.isEmpty())
-                    Bukkit.getLogger().log(Level.SEVERE, "The password of " + uuid + " is null, maybe premium player? ");
+                    ProxyServer.getInstance().getLogger().log(Level.SEVERE, "The password of " + uuid + " is null, maybe premium player? ");
                 else return str.get();
             } catch (InterruptedException | ExecutionException e) {
-                Bukkit.getLogger().log(Level.SEVERE, "Error while getting " + uuid + " password: " + e.getLocalizedMessage());
+                ProxyServer.getInstance().getLogger().log(Level.SEVERE, "Error while getting " + uuid + " password: " + e.getLocalizedMessage());
             }
             return "";
         });

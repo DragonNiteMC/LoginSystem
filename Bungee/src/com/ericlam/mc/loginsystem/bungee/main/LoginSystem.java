@@ -1,48 +1,40 @@
 package com.ericlam.mc.loginsystem.bungee.main;
 
-import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
-import com.ericlam.mc.bungee.hnmc.events.PlayerVerifyCompletedEvent;
-import com.ericlam.mc.loginsystem.bungee.RedisHandler;
-import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.event.ServerConnectEvent;
-import net.md_5.bungee.api.event.ServerSwitchEvent;
+import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
+import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
+import com.ericlam.mc.loginsystem.bungee.LoginConfig;
+import com.ericlam.mc.loginsystem.bungee.LoginListeners;
+import com.ericlam.mc.loginsystem.bungee.commands.EditPasswordCommand;
+import com.ericlam.mc.loginsystem.bungee.commands.LoginCommand;
+import com.ericlam.mc.loginsystem.bungee.commands.RegisterCommand;
+import com.ericlam.mc.loginsystem.bungee.commands.UnRegisterCommand;
+import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
-import net.md_5.bungee.event.EventHandler;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public class LoginSystem extends Plugin implements Listener {
 
     private Set<UUID> cached = new HashSet<>();
-    private RedisHandler handler;
-
     @Override
     public void onEnable() {
-        this.handler = new RedisHandler();
-        this.getProxy().getPluginManager().registerListener(this, this);
-    }
-
-
-    @EventHandler
-    public void onVerifiedCompleted(PlayerVerifyCompletedEvent e){
-        OfflinePlayer player = e.getOfflinePlayer();
-        if (cached.contains(player.getUniqueId())) return;
-        CompletableFuture.supplyAsync(()->handler.commitPlayer(player.getUniqueId(), player.isPremium())).whenCompleteAsync((b,ex)->{
-            if (b) cached.add(player.getUniqueId());
-        });
-    }
-
-    @EventHandler
-    public void onPlayerConnect(ServerConnectEvent e) {
-
-    }
-
-    @EventHandler
-    public void onPlayerSwitch(ServerSwitchEvent e){
-        ProxyServer.getInstance().getScheduler().runAsync(this, ()-> handler.passLogin(e.getPlayer().getUniqueId()));
+        ConfigManager configManager;
+        try {
+            configManager = HyperNiteMC.getAPI().registerConfig(new LoginConfig(this));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        configManager.setMsgConfig("lang.yml", "prefix");
+        LoginManager loginManager = new LoginManager(this, configManager);
+        this.getProxy().getPluginManager().registerListener(this, new LoginListeners(this, configManager, loginManager));
+        HyperNiteMC.getAPI().getCommandRegister().registerCommand(this, new LoginCommand(loginManager, configManager));
+        HyperNiteMC.getAPI().getCommandRegister().registerCommand(this, new RegisterCommand(loginManager, configManager));
+        HyperNiteMC.getAPI().getCommandRegister().registerCommand(this, new UnRegisterCommand(loginManager, configManager));
+        HyperNiteMC.getAPI().getCommandRegister().registerCommand(this, new EditPasswordCommand(loginManager, configManager));
     }
 }

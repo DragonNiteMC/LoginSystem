@@ -1,11 +1,11 @@
-package com.ericlam.mc.loginsystem.commands;
+package com.ericlam.mc.loginsystem.bungee.commands;
 
-import com.ericlam.mc.loginsystem.exceptions.AuthException;
-import com.ericlam.mc.loginsystem.managers.LoginManager;
-import com.hypernite.mc.hnmc.core.managers.ConfigManager;
-import org.bukkit.entity.Player;
+import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
+import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
+import com.ericlam.mc.loginsystem.bungee.exceptions.AuthException;
+import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -15,9 +15,9 @@ public class EditPasswordCommand extends FutureAuthCommandNode {
     }
 
     @Override
-    public CompletableFuture<Boolean> executeOperation(@Nonnull Player player, @Nonnull List<String> list) throws AuthException {
+    public CompletableFuture<Boolean> executeOperation(ProxiedPlayer player, List<String> list) throws AuthException {
         if (loginManager.notLoggedIn(player.getUniqueId())){
-            player.sendMessage(configManager.getMessage("not-logged-in"));
+            MessageBuilder.sendMessage(player, configManager.getMessage("not-logged-in"));
             return CompletableFuture.completedFuture(false);
         }
         final String oldPw = list.get(0);

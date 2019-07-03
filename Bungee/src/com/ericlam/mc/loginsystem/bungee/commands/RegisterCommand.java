@@ -1,11 +1,10 @@
-package com.ericlam.mc.loginsystem.commands;
+package com.ericlam.mc.loginsystem.bungee.commands;
 
-import com.ericlam.mc.loginsystem.exceptions.AuthException;
-import com.ericlam.mc.loginsystem.managers.LoginManager;
-import com.hypernite.mc.hnmc.core.managers.ConfigManager;
-import org.bukkit.entity.Player;
+import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
+import com.ericlam.mc.loginsystem.bungee.exceptions.AuthException;
+import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -16,7 +15,7 @@ public class RegisterCommand extends FutureAuthCommandNode{
     }
 
     @Override
-    public CompletableFuture<Boolean> executeOperation(@Nonnull Player player, @Nonnull List<String> list) throws AuthException {
+    public CompletableFuture<Boolean> executeOperation(ProxiedPlayer player, List<String> list) throws AuthException {
         final String pw = list.get(0);
         final String confirm = list.get(1);
         return loginManager.register(player, pw, confirm);

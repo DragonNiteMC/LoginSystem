@@ -1,6 +1,4 @@
-package com.ericlam.mc.loginsystem.exceptions;
-
-import org.bukkit.entity.Player;
+package com.ericlam.mc.loginsystem.bungee.exceptions;
 
 public class AccountNonExistException extends AuthException{
 
