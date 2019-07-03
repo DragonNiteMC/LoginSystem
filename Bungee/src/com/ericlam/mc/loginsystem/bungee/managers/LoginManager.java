@@ -8,7 +8,6 @@ import com.ericlam.mc.loginsystem.bungee.events.PlayerLoggedEvent;
 import com.ericlam.mc.loginsystem.bungee.exceptions.*;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 
@@ -37,16 +36,16 @@ public class LoginManager {
         this.ipManager = new IPManager();
     }
 
-    public CompletableFuture<String> forceUpdateIP(PendingConnection player) {
+    public CompletableFuture<String> forceUpdateIP(ProxiedPlayer player) {
         return CompletableFuture.supplyAsync(() -> ipManager.updateIP(player));
     }
 
-    public CompletableFuture<Boolean> isMaxAccount(PendingConnection connection) {
+    public CompletableFuture<Boolean> isMaxAccount(ProxiedPlayer connection) {
         final String ip = connection.getAddress().getHostName();
         return CompletableFuture.supplyAsync(() -> ipManager.checkAccount(ip)).thenApply(i -> i >= configManager.getData("mapi", Integer.class).orElse(3));
     }
 
-    public void updateIPTask(PendingConnection player) {
+    public void updateIPTask(ProxiedPlayer player) {
         if (ipMap.containsKey(player.getUniqueId())) return;
         this.forceUpdateIP(player).thenAccept(ip -> this.ipMap.put(player.getUniqueId(), ip)).whenComplete((v, ex) -> {
             if (ex != null) {
@@ -121,8 +120,8 @@ public class LoginManager {
         });
     }
 
-    public CompletableFuture<Boolean> editPassword(OfflinePlayer player, final String password, final String newPassword) {
-        return this.editPassword(player.getUniqueId(), player.getName(), password, newPassword);
+    public CompletableFuture<Boolean> editPassword(OfflinePlayer player, final String newPassword) {
+        return this.editPassword(player.getUniqueId(), player.getName(), passwordManager.getPasswordHash(player.getUniqueId()), newPassword);
     }
 
     public CompletableFuture<Boolean> editPassword(ProxiedPlayer player, final String password, final String newPassword) {

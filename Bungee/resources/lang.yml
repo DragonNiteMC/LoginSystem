@@ -6,6 +6,7 @@ logged-in: "&a你已成功登入。"
 logged-fail: "&c登入失敗。"
 not-in-lobby: "&c你不在大堂伺服器。"
 need-login: "&c請先登入本伺服器"
+update-ip: "該玩家的最新 IP 為&e <ip>"
 max-ac: "&c你已達到最大註冊數"
 operation:
   yes: "&a操作成功。"
