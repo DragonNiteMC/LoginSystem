@@ -11,6 +11,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
+import net.md_5.bungee.api.event.PreLoginEvent;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -21,6 +22,7 @@ import net.md_5.bungee.event.EventPriority;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class LoginListeners implements Listener {
@@ -29,6 +31,7 @@ public class LoginListeners implements Listener {
     private final ConfigManager configManager;
     private final String notLoggedIn;
     private final Map<UUID, ScheduledTask> timerTasks = new HashMap<>();
+    private final Map<String, String> ipMap = new ConcurrentHashMap<>();
     private final Plugin plugin;
     private final RedisHandler redisHandler;
 
@@ -49,7 +52,7 @@ public class LoginListeners implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPlayerLogged(PlayerLoggedEvent e){
+    public void onPlayerLogged(final PlayerLoggedEvent e) {
         ProxiedPlayer player = e.getWho();
         UUID uuid = player.getUniqueId();
         if (e.isCancelled()){
@@ -62,7 +65,7 @@ public class LoginListeners implements Listener {
     }
 
     @EventHandler
-    public void onServerConnect(ServerConnectEvent e) {
+    public void onServerConnect(final ServerConnectEvent e) {
         String lobby = configManager.getData("lobby", String.class).orElse("lobby");
         if (e.getTarget().getName().equals(lobby)) return;
         if (loginManager.notLoggedIn(e.getPlayer().getUniqueId())) {
@@ -72,9 +75,10 @@ public class LoginListeners implements Listener {
     }
 
     @EventHandler
-    public void onPlayerQuit(PlayerDisconnectEvent e) {
+    public void onPlayerQuit(final PlayerDisconnectEvent e) {
         loginManager.clearFail(e.getPlayer());
         this.clearTimer(e.getPlayer().getUniqueId());
+        this.ipMap.remove(e.getPlayer().getName());
     }
 
     private void clearTimer(UUID uuid){
@@ -85,7 +89,19 @@ public class LoginListeners implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(PostLoginEvent e) {
+    public void onPlayerLogin(final PreLoginEvent e) {
+        String ip = e.getConnection().getAddress().getHostName();
+        long amount = this.ipMap.values().stream().filter(address -> address.equals(ip)).count();
+        if (amount >= configManager.getData("mlpi", Integer.class).orElse(3)) {
+            e.setCancelReason(new MessageBuilder(configManager.getPureMessage("max-login")).build());
+            e.setCancelled(true);
+            return;
+        }
+        this.ipMap.put(e.getConnection().getName(), ip);
+    }
+
+    @EventHandler
+    public void onPlayerJoin(final PostLoginEvent e) {
         loginManager.updateIPTask(e.getPlayer());
         HyperNiteMC.getAPI().getPlayerManager().getOfflinePlayer(e.getPlayer().getUniqueId()).whenComplete((offlinePlayer, throwable) -> {
             if (throwable != null) {
