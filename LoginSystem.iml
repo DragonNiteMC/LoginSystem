@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="RedisHandlerHNMC" level="project" />
+    <orderEntry type="library" name="halfpremium_main" level="project" />
   </component>
 </module>

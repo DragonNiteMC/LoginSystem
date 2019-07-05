@@ -8,7 +8,7 @@ import com.hypernite.mc.hnmc.core.managers.ConfigManager;
 import me.lucko.luckperms.LuckPerms;
 import me.lucko.luckperms.api.LuckPermsApi;
 import me.lucko.luckperms.api.Node;
-import me.lucko.luckperms.api.TemporaryMergeBehaviour;
+import me.lucko.luckperms.api.event.user.UserLoadEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
@@ -30,18 +30,21 @@ public class LoginSystem extends JavaPlugin implements Listener {
 
     private List<String> playersCommand;
 
+    private Set<UUID> uuids = new HashSet<>();
+
     @Override
     public void onEnable() {
-        ConfigSetter setter = new ConfigSetter(this, "lang.yml") {
+        ConfigSetter setter = new ConfigSetter(this, "lobby.yml") {
 
             @Override
             public void loadConfig(Map<String, FileConfiguration> map) {
-                FileConfiguration lang = map.get("lang.yml");
+                FileConfiguration lang = map.get("lobby.yml");
                 playersCommand = lang.getStringList("premium-permissions");
+                System.out.println(playersCommand.toString());
             }
         };
         ConfigManager configManager = HyperNiteMC.getAPI().registerConfig(setter);
-        configManager.setMsgConfig("lang.yml","prefix");
+        configManager.setMsgConfig("lobby.yml", "prefix");
         this.notloggedInMessage = configManager.getMessage("not-logged-in");
         this.getServer().getPluginManager().registerEvents(this, this);
         Bukkit.getScheduler().runTaskAsynchronously(this, ()->{
@@ -51,6 +54,8 @@ public class LoginSystem extends JavaPlugin implements Listener {
                 this.getLogger().log(Level.SEVERE, "無法連接到 Jedis: "+e.getLocalizedMessage());
             }
         });
+
+        LuckPerms.getApi().getEventBus().subscribe(UserLoadEvent.class, this::onUserLoad);
     }
 
     @EventHandler
@@ -60,6 +65,22 @@ public class LoginSystem extends JavaPlugin implements Listener {
             e.setCancelled(true);
             e.getPlayer().sendMessage(notloggedInMessage);
         }
+    }
+
+    private void onUserLoad(UserLoadEvent e) {
+        LuckPermsApi api = LuckPerms.getApi();
+        if (!this.uuids.contains(e.getUser().getUuid())) return;
+        playersCommand.forEach(perm -> {
+            Node node = api.getNodeFactory().newBuilder(perm).setValue(true).setServer("global").build();
+            if (!e.getUser().hasPermission(node).asBoolean()) {
+                e.getUser().setPermission(node);
+                this.getLogger().info("adding permission `" + node.getPermission() + "` to " + e.getUser().getName());
+            }
+        });
+        if (playersCommand.size() > 0) api.getUserManager().saveUser(e.getUser())
+                .thenComposeAsync(v -> e.getUser().refreshCachedData())
+                .whenComplete((v, ex) -> this.getLogger().info("Adding Completed."));
+        this.uuids.remove(e.getUser().getUuid());
     }
 
 
@@ -82,11 +103,8 @@ public class LoginSystem extends JavaPlugin implements Listener {
 
 
     public void gainPermission(UUID uuid) {
-        LuckPermsApi api = LuckPerms.getApi();
-        playersCommand.forEach(perm -> {
-            Node node = api.getNodeFactory().newBuilder(perm).setNegated(false).build();
-            api.getUserSafe(uuid).ifPresentOrElse(user -> user.setPermission(node, TemporaryMergeBehaviour.FAIL_WITH_ALREADY_HAS), () -> this.getLogger().warning("We cannot find user with uuid " + uuid.toString() + ", skipped."));
-        });
+        this.getLogger().info("added " + uuid + " as premium queue");
+        this.uuids.add(uuid);
     }
 
 
