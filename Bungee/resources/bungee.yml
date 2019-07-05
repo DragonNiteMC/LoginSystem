@@ -1,3 +1,4 @@
 name: LoginSystem
-main: com.ericlam.mc.loginsystem.bungee.main
-version: 0.0.5-SNAPSHOT
+main: com.ericlam.mc.loginsystem.bungee.main.LoginSystem
+version: 0.1.5-SNAPSHOT
+depend: [HyperNiteMC-Bungee]

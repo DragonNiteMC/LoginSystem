@@ -1,3 +1,4 @@
 name: LoginSystem
-version: 0.0.5-SNAPSHOT
+version: 0.1.5-SNAPSHOT
 main: com.ericlam.mc.loginsystem.main.LoginSystem
+depend: [HyperNiteMC-Core]

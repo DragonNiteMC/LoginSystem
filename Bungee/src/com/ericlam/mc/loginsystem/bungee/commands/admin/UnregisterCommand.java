@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class UnregisterCommand extends AdminAuthNode {
-    public UnregisterCommand(LoginManager loginManager, ConfigManager configManager) {
+    UnregisterCommand(LoginManager loginManager, ConfigManager configManager) {
         super(loginManager, configManager, "unregister", "取消註冊玩家", null, "unreg");
     }
 

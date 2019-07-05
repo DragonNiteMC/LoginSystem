@@ -12,14 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
 class SessionManager {
     private Map<UUID, Timestamp> sessionMap = new ConcurrentHashMap<>();
 
-    private int sessionMins;
+    private final int sessionMins;
 
     SessionManager(ConfigManager configManager){
         this.sessionMins = configManager.getData("em", Integer.class).orElse(60);
     }
 
     boolean isExpired(UUID uuid){
-        return Optional.ofNullable(this.sessionMap.get(uuid)).map(ts->ts.after(Timestamp.from(Instant.now()))).orElse(true);
+        return Optional.ofNullable(this.sessionMap.get(uuid)).map(ts -> ts.before(Timestamp.from(Instant.now()))).orElse(true);
     }
 
     void addSession(UUID uuid){

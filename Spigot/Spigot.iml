@@ -17,8 +17,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Paper1.14.2" level="project" />
-    <orderEntry type="library" name="jedis-2.9.0" level="project" />
     <orderEntry type="module" module-name="LoginSystem" />
+    <orderEntry type="library" name="RedisHandlerHNMC" level="project" />
+    <orderEntry type="library" name="Paper-1.14.3" level="project" />
   </component>
 </module>

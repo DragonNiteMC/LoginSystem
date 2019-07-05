@@ -2,8 +2,7 @@ package com.ericlam.mc.loginsystem.bungee;
 
 import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
 import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
-import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
-import com.ericlam.mc.bungee.hnmc.events.PlayerVerifyCompletedEvent;
+import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
 import com.ericlam.mc.loginsystem.bungee.events.PlayerLoggedEvent;
 import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
 import net.md_5.bungee.BungeeTitle;
@@ -64,6 +63,8 @@ public class LoginListeners implements Listener {
 
     @EventHandler
     public void onServerConnect(ServerConnectEvent e) {
+        String lobby = configManager.getData("lobby", String.class).orElse("lobby");
+        if (e.getTarget().getName().equals(lobby)) return;
         if (loginManager.notLoggedIn(e.getPlayer().getUniqueId())) {
             e.setCancelled(true);
             MessageBuilder.sendMessage(e.getPlayer(), notLoggedIn);
@@ -85,30 +86,35 @@ public class LoginListeners implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PostLoginEvent e) {
-        loginManager.updateIPTask(e.getPlayer().getPendingConnection());
-    }
-
-
-
-    @EventHandler
-    public void onPlayerVerifiedComplete(PlayerVerifyCompletedEvent e) {
-        OfflinePlayer player = e.getOfflinePlayer();
-        boolean premium = player.isPremium();
-        UUID uuid = player.getUniqueId();
-        if (!player.isOnline()) return;
-        if (premium && loginManager.notLoggedIn(uuid)) {
-            loginManager.passLogin(player);
-        } else if (!premium) {
-            loginManager.loadUserData(uuid);
-            if (loginManager.notLoggedIn(uuid)) {
-                long secs = configManager.getData("sbf", Integer.class).orElse(60);
-                ScheduledTask task = ProxyServer.getInstance().getScheduler().schedule(plugin, () -> {
-                    player.getPlayer().disconnect(TextComponent.fromLegacyText(configManager.getPureMessage("kick-timeout")));
-                }, secs, TimeUnit.SECONDS);
-                timerTasks.put(uuid, task);
-                redisHandler.notLoginPubish(uuid);
+        loginManager.updateIPTask(e.getPlayer());
+        HyperNiteMC.getAPI().getPlayerManager().getOfflinePlayer(e.getPlayer().getUniqueId()).whenComplete((offlinePlayer, throwable) -> {
+            if (throwable != null) {
+                throwable.printStackTrace();
+                return;
             }
-        }
+
+            offlinePlayer.ifPresent(player -> {
+                boolean premium = player.isPremium();
+                UUID uuid = player.getUniqueId();
+                if (!player.isOnline()) {
+                    plugin.getLogger().info("player is not online, skipped");
+                    return;
+                }
+                if (premium && loginManager.notLoggedIn(uuid)) {
+                    loginManager.passLogin(player);
+                } else if (!premium) {
+                    loginManager.loadUserData(uuid);
+                    if (loginManager.notLoggedIn(uuid)) {
+                        long secs = configManager.getData("sbf", Integer.class).orElse(60);
+                        ScheduledTask task = ProxyServer.getInstance().getScheduler().schedule(plugin, () -> {
+                            player.getPlayer().disconnect(TextComponent.fromLegacyText(configManager.getPureMessage("kick-timeout")));
+                        }, secs, TimeUnit.SECONDS);
+                        timerTasks.put(uuid, task);
+                        redisHandler.notLoginPubish(uuid);
+                    }
+                }
+            });
+        });
     }
 
 }

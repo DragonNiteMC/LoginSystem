@@ -76,7 +76,7 @@ public class PasswordManager {
     boolean editPassword(UUID uuid, String name, final String password) {
         if (!passwordMap.containsKey(uuid)) throw new AccountNonExistException();
         final String encoded = hashing(password);
-        try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("UPDATE `LoginDaa` SET `Name`=?, `Password`=? WHERE `PlayerUUID`=?")) {
+        try (Connection connection = sqlDataSource.getConnection(); PreparedStatement statement = connection.prepareStatement("UPDATE `LoginData` SET `Name`=?, `Password`=? WHERE `PlayerUUID`=?")) {
             statement.setString(1, name);
             statement.setString(2, encoded);
             statement.setString(3, uuid.toString());

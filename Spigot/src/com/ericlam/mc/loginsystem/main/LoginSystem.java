@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.logging.Level;
 
 public class LoginSystem extends JavaPlugin implements Listener {

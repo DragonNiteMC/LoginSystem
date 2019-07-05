@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class UpdateIPCommand extends AdminAuthNode {
-    public UpdateIPCommand(LoginManager loginManager, ConfigManager configManager) {
+    UpdateIPCommand(LoginManager loginManager, ConfigManager configManager) {
         super(loginManager, configManager, "updateip", "更新玩家IP", null, "ipupdate");
     }
 

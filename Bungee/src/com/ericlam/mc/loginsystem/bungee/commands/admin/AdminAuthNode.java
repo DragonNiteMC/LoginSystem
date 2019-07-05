@@ -30,6 +30,11 @@ public abstract class AdminAuthNode extends FutureAuthCommandNode {
                 return CompletableFuture.completedFuture(false);
             }
             list.remove(0);
+            OfflinePlayer offlinePlayer = offopt.get();
+            if (offlinePlayer.isPremium()) {
+                MessageBuilder.sendMessage(player, HyperNiteMC.getAPI().getMainConfig().getPrefix() + "§e對方是正版玩家！");
+                return CompletableFuture.completedFuture(false);
+            }
             return this.execution(player, list, offopt.get());
         });
     }

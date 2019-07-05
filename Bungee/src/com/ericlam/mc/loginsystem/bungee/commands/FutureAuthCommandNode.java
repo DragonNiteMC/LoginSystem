@@ -17,9 +17,8 @@ public abstract class FutureAuthCommandNode extends AuthCommandNode {
     @Override
     public void executeAuth(ProxiedPlayer player, List<String> list) throws AuthException {
         this.executeOperation(player,list).whenComplete(((aBoolean, throwable) -> {
-            if (throwable != null){
-                throwable.printStackTrace();
-                return;
+            if (throwable instanceof AuthException) {
+                throw (AuthException) throwable;
             }
             String path = "operation."+aBoolean;
             MessageBuilder.sendMessage(player, configManager.getMessage(path));

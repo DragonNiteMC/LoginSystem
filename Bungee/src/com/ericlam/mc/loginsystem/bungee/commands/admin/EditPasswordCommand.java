@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class EditPasswordCommand extends AdminAuthNode {
-    public EditPasswordCommand(LoginManager loginManager, ConfigManager configManager) {
+    EditPasswordCommand(LoginManager loginManager, ConfigManager configManager) {
         super(loginManager, configManager, "editpassword", "修改密碼", "<password>", "editpw");
     }
 

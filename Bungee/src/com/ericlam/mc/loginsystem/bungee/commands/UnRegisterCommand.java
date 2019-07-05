@@ -3,6 +3,7 @@ package com.ericlam.mc.loginsystem.bungee.commands;
 import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
 import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AuthException;
+import com.ericlam.mc.loginsystem.bungee.exceptions.PremiumException;
 import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
@@ -21,6 +22,7 @@ public class UnRegisterCommand extends FutureAuthCommandNode {
             MessageBuilder.sendMessage(player, configManager.getMessage("not-logged-in"));
             return CompletableFuture.completedFuture(false);
         }
+        if (player.getPendingConnection().isOnlineMode()) throw new PremiumException();
         return loginManager.unregister(player);
     }
 }
