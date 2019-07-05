@@ -19,4 +19,10 @@ public class RedisHandler {
             redis.publish("Login-Slave", "LOGIN-PASS_" + uuid.toString());
         }
     }
+
+    public void permissionGainPublish(UUID uuid) {
+        try (Jedis jedis = RedisManager.getInstance().getRedis()) {
+            jedis.publish("Login-Slave", "GAIN-PERM_" + uuid.toString());
+        }
+    }
 }

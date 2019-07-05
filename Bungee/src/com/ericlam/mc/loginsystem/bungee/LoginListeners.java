@@ -2,6 +2,8 @@ package com.ericlam.mc.loginsystem.bungee;
 
 import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
 import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
+import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
+import com.ericlam.mc.bungee.hnmc.events.PlayerVerifyCompletedEvent;
 import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
 import com.ericlam.mc.loginsystem.bungee.events.PlayerLoggedEvent;
 import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
@@ -98,6 +100,13 @@ public class LoginListeners implements Listener {
             return;
         }
         this.ipMap.put(e.getConnection().getName(), ip);
+    }
+
+    @EventHandler
+    public void onPlayerVerified(final PlayerVerifyCompletedEvent e) {
+        OfflinePlayer player = e.getOfflinePlayer();
+        if (!player.isPremium()) return;
+        redisHandler.permissionGainPublish(player.getUniqueId());
     }
 
     @EventHandler

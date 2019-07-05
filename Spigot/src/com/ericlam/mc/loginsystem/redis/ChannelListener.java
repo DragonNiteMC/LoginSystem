@@ -25,6 +25,9 @@ public class ChannelListener extends JedisPubSub {
             case "login-pass":
                 loginSystem.removeNotLogged(uuid);
                 break;
+            case "gain-perm":
+                loginSystem.gainPermission(uuid);
+                break;
             default:
                 break;
         }
