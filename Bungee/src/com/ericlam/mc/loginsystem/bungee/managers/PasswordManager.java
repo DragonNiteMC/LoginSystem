@@ -2,13 +2,11 @@ package com.ericlam.mc.loginsystem.bungee.managers;
 
 import com.ericlam.mc.bungee.hnmc.SQLDataSource;
 import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
-import com.ericlam.mc.loginsystem.RedisManager;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AccountNonExistException;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AlreadyRegisteredException;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
-import redis.clients.jedis.Jedis;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -116,12 +114,6 @@ public class PasswordManager {
             }
             return "";
         });
-    }
-
-    boolean isPremium(UUID uuid) {
-        try (Jedis redis = RedisManager.getInstance().getRedis()) {
-            return Boolean.parseBoolean(redis.hget(uuid.toString(), "premium"));
-        }
     }
 
 

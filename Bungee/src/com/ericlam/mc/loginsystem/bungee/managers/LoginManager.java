@@ -57,16 +57,6 @@ public class LoginManager {
         });
     }
 
-    public CompletableFuture<Boolean> isPremium(UUID player) {
-        return HyperNiteMC.getAPI().getPlayerManager().getOfflinePlayer(player).handleAsync((offlinePlayer, throwable) -> {
-            if (throwable != null) {
-                throwable.printStackTrace();
-                return false;
-            }
-            return offlinePlayer.map(OfflinePlayer::isPremium).orElse(false);
-        });
-    }
-
     public void handleFail(ProxiedPlayer player) {
         int kick = configManager.getData("tbf", Integer.class).orElse(3);
         int fail = failMap.getOrDefault(player.getUniqueId(), 0);
@@ -95,7 +85,11 @@ public class LoginManager {
         PlayerLoggedEvent event = new PlayerLoggedEvent(player.getPlayer(), player.isPremium());
         ProxyServer.getInstance().getPluginManager().callEvent(event);
         if (!event.isCancelled()) {
-            sessionManager.addSession(player.getUniqueId());
+            if (player.isPremium()) {
+                sessionManager.addPremiumSession(player.getUniqueId());
+            } else {
+                sessionManager.addSession(player.getUniqueId());
+            }
             failMap.remove(player.getUniqueId());
         } else {
             failMap.computeIfPresent(player.getUniqueId(), (p, v) -> ++v);

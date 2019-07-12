@@ -18,7 +18,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="LoginSystem" />
-    <orderEntry type="library" name="RedisHandlerHNMC" level="project" />
     <orderEntry type="library" name="BungeeCord" level="project" />
+    <orderEntry type="library" name="commons-pool2-2.6.0" level="project" />
   </component>
 </module>

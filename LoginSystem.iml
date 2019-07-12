@@ -7,7 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="RedisHandlerHNMC" level="project" />
-    <orderEntry type="library" name="halfpremium_main" level="project" />
+    <orderEntry type="library" name="commons-pool2-2.6.0" level="project" />
   </component>
 </module>

@@ -97,6 +97,9 @@ public class LoginListeners implements Listener {
         if (amount >= configManager.getData("mlpi", Integer.class).orElse(3)) {
             e.setCancelReason(new MessageBuilder(configManager.getPureMessage("max-login")).build());
             e.setCancelled(true);
+            this.ipMap.forEach((k, v) -> {
+                if (ProxyServer.getInstance().getPlayer(k) == null) this.ipMap.remove(k);
+            });
             return;
         }
         this.ipMap.put(e.getConnection().getName(), ip);
