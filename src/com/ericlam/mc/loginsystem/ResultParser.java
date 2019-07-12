@@ -29,6 +29,11 @@ public class ResultParser {
         return this;
     }
 
+    public ResultParser setResult(Supplier<Boolean> result) {
+        this.result = result;
+        return this;
+    }
+
     public boolean getResult() {
         return result.get();
     }

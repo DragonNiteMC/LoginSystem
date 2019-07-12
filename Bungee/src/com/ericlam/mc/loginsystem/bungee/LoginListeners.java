@@ -69,6 +69,7 @@ public class LoginListeners implements Listener {
     @EventHandler
     public void onServerConnect(final ServerConnectEvent e) {
         String lobby = configManager.getData("lobby", String.class).orElse("lobby");
+        if (!e.getPlayer().getServer().getInfo().getName().equals(lobby)) return;
         if (e.getTarget().getName().equals(lobby)) return;
         if (loginManager.notLoggedIn(e.getPlayer().getUniqueId())) {
             e.setCancelled(true);

@@ -1,6 +1,7 @@
 package com.ericlam.mc.loginsystem.bungee.managers;
 
 import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
+import com.ericlam.mc.loginsystem.ResultParser;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -17,7 +18,7 @@ class SessionManager {
     }
 
     boolean isExpired(UUID uuid){
-        return Optional.ofNullable(this.sessionMap.get(uuid)).map(ts -> ts.isBefore(LocalDateTime.now())).orElse(true);
+        return ResultParser.check(() -> Optional.ofNullable(this.sessionMap.get(uuid)).map(ts -> ts.isBefore(LocalDateTime.now())).orElse(true)).ifTrue(() -> this.sessionMap.remove(uuid)).getResult();
     }
 
     void addSession(UUID uuid){
