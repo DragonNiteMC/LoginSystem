@@ -1,4 +1,4 @@
 name: LoginSystem
-version: 0.2.2-SNAPSHOT
+version: 0.2.3-SNAPSHOT
 main: com.ericlam.mc.loginsystem.main.LoginSystem
 depend: [HyperNiteMC-Core, LuckPerms]

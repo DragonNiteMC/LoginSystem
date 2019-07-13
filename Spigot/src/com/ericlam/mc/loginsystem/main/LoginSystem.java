@@ -11,10 +11,7 @@ import me.lucko.luckperms.api.Node;
 import me.lucko.luckperms.api.event.user.UserLoadEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisException;
@@ -58,15 +55,6 @@ public class LoginSystem extends JavaPlugin implements Listener {
         LuckPerms.getApi().getEventBus().subscribe(UserLoadEvent.class, this::onUserLoad);
     }
 
-    @EventHandler
-    public void onCommandPreProcess(PlayerCommandPreprocessEvent e){
-        UUID uuid = e.getPlayer().getUniqueId();
-        if (this.notloggedIn.contains(uuid)){
-            e.setCancelled(true);
-            e.getPlayer().sendMessage(notloggedInMessage);
-        }
-    }
-
     private void onUserLoad(UserLoadEvent e) {
         LuckPermsApi api = LuckPerms.getApi();
         if (!this.uuids.contains(e.getUser().getUuid())) return;
@@ -82,25 +70,6 @@ public class LoginSystem extends JavaPlugin implements Listener {
                 .whenComplete((v, ex) -> this.getLogger().info("Adding Completed."));
         this.uuids.remove(e.getUser().getUuid());
     }
-
-
-    @EventHandler
-    public void onPlayerChat(AsyncPlayerChatEvent e){
-        UUID uuid = e.getPlayer().getUniqueId();
-        if (this.notloggedIn.contains(uuid)){
-            e.setCancelled(true);
-            e.getPlayer().sendMessage(notloggedInMessage);
-        }
-    }
-
-    public void addNotLogged(UUID uuid){
-        this.notloggedIn.add(uuid);
-    }
-
-    public void removeNotLogged(UUID uuid){
-        this.notloggedIn.add(uuid);
-    }
-
 
     public void gainPermission(UUID uuid) {
         this.getLogger().info("added " + uuid + " as premium queue");

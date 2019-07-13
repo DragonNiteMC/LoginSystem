@@ -11,7 +11,9 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -25,7 +27,6 @@ public class LoginManager {
     private final Plugin plugin;
     private Map<UUID, Integer> failMap = new HashMap<>();
     private Map<UUID, String> ipMap = new ConcurrentHashMap<>();
-    private Set<UUID> logon = new HashSet<>();
 
     public LoginManager(Plugin plugin, ConfigManager configManager) {
         this.plugin = plugin;
@@ -89,7 +90,6 @@ public class LoginManager {
             } else {
                 sessionManager.addSession(player.getUniqueId());
             }
-            this.logon.add(player.getUniqueId());
             failMap.remove(player.getUniqueId());
         } else {
             failMap.computeIfPresent(player.getUniqueId(), (p, v) -> ++v);

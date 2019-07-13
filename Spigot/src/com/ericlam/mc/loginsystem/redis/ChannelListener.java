@@ -19,12 +19,6 @@ public class ChannelListener extends JedisPubSub {
         String method = params[0].toLowerCase();
         UUID uuid = UUID.fromString(params[1]);
         switch (method){
-            case "not-login":
-                loginSystem.addNotLogged(uuid);
-                break;
-            case "login-pass":
-                loginSystem.removeNotLogged(uuid);
-                break;
             case "gain-perm":
                 loginSystem.gainPermission(uuid);
                 break;

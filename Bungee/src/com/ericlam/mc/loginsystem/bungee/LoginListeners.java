@@ -11,10 +11,7 @@ import net.md_5.bungee.BungeeTitle;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.event.PlayerDisconnectEvent;
-import net.md_5.bungee.api.event.PostLoginEvent;
-import net.md_5.bungee.api.event.PreLoginEvent;
-import net.md_5.bungee.api.event.ServerConnectEvent;
+import net.md_5.bungee.api.event.*;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.api.scheduler.ScheduledTask;
@@ -62,7 +59,6 @@ public class LoginListeners implements Listener {
         }else{
             this.clearTimer(uuid);
             MessageBuilder.sendMessage(player, configManager.getMessage("logged-in"));
-            if (!e.isPremium()) redisHandler.lognPublish(uuid);
         }
     }
 
@@ -74,6 +70,19 @@ public class LoginListeners implements Listener {
         if (loginManager.notLoggedIn(e.getPlayer().getUniqueId())) {
             e.setCancelled(true);
             MessageBuilder.sendMessage(e.getPlayer(), notLoggedIn);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerChat(final ChatEvent e) {
+        if (!(e.getSender() instanceof ProxiedPlayer)) return;
+        ProxiedPlayer player = (ProxiedPlayer) e.getSender();
+        UUID uuid = player.getUniqueId();
+        String lobby = configManager.getData("lobby", String.class).orElse("lobby");
+        if (!player.getServer().getInfo().getName().equals(lobby)) return;
+        if (loginManager.notLoggedIn(uuid)) {
+            e.setCancelled(true);
+            MessageBuilder.sendMessage(player, notLoggedIn);
         }
     }
 
@@ -139,7 +148,6 @@ public class LoginListeners implements Listener {
                             player.getPlayer().disconnect(TextComponent.fromLegacyText(configManager.getPureMessage("kick-timeout")));
                         }, secs, TimeUnit.SECONDS);
                         timerTasks.put(uuid, task);
-                        redisHandler.notLoginPubish(uuid);
                     }
                 }
             });
