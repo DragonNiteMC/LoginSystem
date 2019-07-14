@@ -1,5 +1,3 @@
-prefix: "&6登入系統// &7"
-not-logged-in: "尚未登入!"
 premium-permissions:
   - crystal.premium
   - i.am.premium

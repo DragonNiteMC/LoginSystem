@@ -4,7 +4,6 @@ import com.ericlam.mc.loginsystem.RedisManager;
 import com.ericlam.mc.loginsystem.redis.ChannelListener;
 import com.hypernite.mc.hnmc.core.config.ConfigSetter;
 import com.hypernite.mc.hnmc.core.main.HyperNiteMC;
-import com.hypernite.mc.hnmc.core.managers.ConfigManager;
 import me.lucko.luckperms.LuckPerms;
 import me.lucko.luckperms.api.LuckPermsApi;
 import me.lucko.luckperms.api.Node;
@@ -21,10 +20,6 @@ import java.util.logging.Level;
 
 public class LoginSystem extends JavaPlugin implements Listener {
 
-    private Set<UUID> notloggedIn = new HashSet<>();
-
-    private String notloggedInMessage;
-
     private List<String> playersCommand;
 
     private Set<UUID> uuids = new HashSet<>();
@@ -37,12 +32,9 @@ public class LoginSystem extends JavaPlugin implements Listener {
             public void loadConfig(Map<String, FileConfiguration> map) {
                 FileConfiguration lang = map.get("lobby.yml");
                 playersCommand = lang.getStringList("premium-permissions");
-                System.out.println(playersCommand.toString());
             }
         };
-        ConfigManager configManager = HyperNiteMC.getAPI().registerConfig(setter);
-        configManager.setMsgConfig("lobby.yml", "prefix");
-        this.notloggedInMessage = configManager.getMessage("not-logged-in");
+        HyperNiteMC.getAPI().registerConfig(setter);
         this.getServer().getPluginManager().registerEvents(this, this);
         Bukkit.getScheduler().runTaskAsynchronously(this, ()->{
             try(Jedis jedis = RedisManager.getInstance().getRedis()){
@@ -58,16 +50,20 @@ public class LoginSystem extends JavaPlugin implements Listener {
     private void onUserLoad(UserLoadEvent e) {
         LuckPermsApi api = LuckPerms.getApi();
         if (!this.uuids.contains(e.getUser().getUuid())) return;
-        playersCommand.forEach(perm -> {
+        boolean save = false;
+        for (String perm : playersCommand) {
             Node node = api.getNodeFactory().newBuilder(perm).setValue(true).setServer("global").build();
             if (!e.getUser().hasPermission(node).asBoolean()) {
+                save = true;
                 e.getUser().setPermission(node);
                 this.getLogger().info("adding permission `" + node.getPermission() + "` to " + e.getUser().getName());
             }
-        });
-        if (playersCommand.size() > 0) api.getUserManager().saveUser(e.getUser())
-                .thenComposeAsync(v -> e.getUser().refreshCachedData())
-                .whenComplete((v, ex) -> this.getLogger().info("Adding Completed."));
+        }
+        if (save) {
+            api.getUserManager().saveUser(e.getUser())
+                    .thenComposeAsync(v -> e.getUser().refreshCachedData())
+                    .whenComplete((v, ex) -> this.getLogger().info("Adding Completed."));
+        }
         this.uuids.remove(e.getUser().getUuid());
     }
 
