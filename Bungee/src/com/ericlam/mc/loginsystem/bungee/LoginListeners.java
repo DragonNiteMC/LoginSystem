@@ -123,6 +123,7 @@ public class LoginListeners implements Listener {
     public void onPlayerVerified(final PlayerVerifyCompletedEvent e) {
         OfflinePlayer player = e.getOfflinePlayer();
         if (!player.isPremium()) return;
+        plugin.getLogger().info("Telling lobby to gain permission for " + player.getName());
         redisHandler.permissionGainPublish(player.getUniqueId());
     }
 
