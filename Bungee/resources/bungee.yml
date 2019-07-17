@@ -1,4 +1,5 @@
 name: LoginSystem
 main: com.ericlam.mc.loginsystem.bungee.main.LoginSystem
-version: 0.2.5-SNAPSHOT
+version: 0.2.7
+author: Hydranapse_
 depends: [HyperNiteMC-Bungee]

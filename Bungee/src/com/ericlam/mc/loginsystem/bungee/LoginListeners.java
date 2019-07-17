@@ -10,7 +10,9 @@ import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
 import net.md_5.bungee.BungeeTitle;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.event.*;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -20,6 +22,7 @@ import net.md_5.bungee.event.EventPriority;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -65,7 +68,8 @@ public class LoginListeners implements Listener {
     @EventHandler
     public void onServerConnect(final ServerConnectEvent e) {
         String lobby = configManager.getData("lobby", String.class).orElse("lobby");
-        if (!e.getPlayer().getServer().getInfo().getName().equals(lobby)) return;
+        if (!Optional.ofNullable(e.getPlayer().getServer()).map(Server::getInfo).map(ServerInfo::getName).orElse("").equals(lobby))
+            return;
         if (e.getTarget().getName().equals(lobby)) return;
         if (loginManager.notLoggedIn(e.getPlayer().getUniqueId())) {
             e.setCancelled(true);
