@@ -119,12 +119,17 @@ public class LoginListeners implements Listener {
         this.ipMap.put(e.getConnection().getName(), ip);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerVerified(final PlayerVerifyCompletedEvent e) {
+        e.registerIntent(plugin);
         OfflinePlayer player = e.getOfflinePlayer();
-        if (!player.isPremium()) return;
+        if (!player.isPremium()) {
+            e.completeIntent(plugin);
+            return;
+        }
         plugin.getLogger().info("Telling lobby to gain permission for " + player.getName());
         redisHandler.permissionGainPublish(player.getUniqueId());
+        e.completeIntent(plugin);
     }
 
     @EventHandler
