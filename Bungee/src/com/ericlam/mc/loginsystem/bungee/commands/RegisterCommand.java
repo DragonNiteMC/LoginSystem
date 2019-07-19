@@ -1,9 +1,9 @@
 package com.ericlam.mc.loginsystem.bungee.commands;
 
-import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
 import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AlreadyLoggedException;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AuthException;
+import com.ericlam.mc.loginsystem.bungee.exceptions.MaxAccountReachedException;
 import com.ericlam.mc.loginsystem.bungee.exceptions.PremiumException;
 import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -25,8 +25,7 @@ public class RegisterCommand extends FutureAuthCommandNode{
         if (!loginManager.notLoggedIn(player.getUniqueId())) throw new AlreadyLoggedException();
         return loginManager.isMaxAccount(player).thenComposeAsync((max) -> {
             if (max) {
-                MessageBuilder.sendMessage(player, configManager.getMessage("max-ac"));
-                return CompletableFuture.completedFuture(false);
+                throw new MaxAccountReachedException();
             } else {
                 return loginManager.register(player, pw, confirm);
             }
