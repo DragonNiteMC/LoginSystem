@@ -119,15 +119,15 @@ public class LoginManager {
     }
 
     public CompletableFuture<Boolean> editPassword(ProxiedPlayer player, final String password, final String newPassword) {
-        return this.editPassword(player.getUniqueId(), player.getName(), password, newPassword);
+        return this.editPassword(player.getUniqueId(), player.getName(), PasswordManager.hashing(password), newPassword);
     }
 
-    private CompletableFuture<Boolean> editPassword(UUID uuid, String name, final String password, final String newPassword) {
-        if (password.equals(newPassword)) throw new SamePasswordException();
-        String oldHash = passwordManager.getPasswordHash(uuid);
-        String hash = PasswordManager.hashing(password);
-        if (!oldHash.equals(hash)) throw new WrongPasswordException();
-        return CompletableFuture.supplyAsync(() -> ResultParser.check(() -> passwordManager.editPassword(uuid, name, password)).ifTrue(() -> sessionManager.clearSession(uuid)).getResult());
+    private CompletableFuture<Boolean> editPassword(UUID uuid, String name, final String passwordHashed, final String newPassword) {
+        final String newPasswordHashed = PasswordManager.hashing(newPassword);
+        if (passwordHashed.equals(newPasswordHashed)) throw new SamePasswordException();
+        final String oldHash = passwordManager.getPasswordHash(uuid);
+        if (!oldHash.equals(passwordHashed)) throw new WrongPasswordException();
+        return CompletableFuture.supplyAsync(() -> ResultParser.check(() -> passwordManager.editPassword(uuid, name, newPassword)).ifTrue(() -> sessionManager.clearSession(uuid)).getResult());
     }
 
     public CompletableFuture<Boolean> unregister(OfflinePlayer player) {
