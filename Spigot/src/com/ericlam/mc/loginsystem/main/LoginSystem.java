@@ -2,20 +2,24 @@ package com.ericlam.mc.loginsystem.main;
 
 import com.ericlam.mc.loginsystem.RedisManager;
 import com.ericlam.mc.loginsystem.redis.ChannelListener;
-import com.hypernite.mc.hnmc.core.config.ConfigSetter;
+import com.hypernite.mc.hnmc.core.config.Prop;
+import com.hypernite.mc.hnmc.core.config.yaml.Configuration;
+import com.hypernite.mc.hnmc.core.config.yaml.Resource;
 import com.hypernite.mc.hnmc.core.main.HyperNiteMC;
 import me.lucko.luckperms.LuckPerms;
 import me.lucko.luckperms.api.LuckPermsApi;
 import me.lucko.luckperms.api.Node;
 import me.lucko.luckperms.api.event.user.UserLoadEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisException;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 
 public class LoginSystem extends JavaPlugin implements Listener {
@@ -24,17 +28,15 @@ public class LoginSystem extends JavaPlugin implements Listener {
 
     private Set<UUID> uuids = new HashSet<>();
 
+    @Resource(locate = "lobby.yml")
+    private static class LoginConfig extends Configuration{
+        @Prop(path = "premium-permissions")
+        private List<String> playersCommand;
+    }
+
     @Override
     public void onEnable() {
-        ConfigSetter setter = new ConfigSetter(this, "lobby.yml") {
-
-            @Override
-            public void loadConfig(Map<String, FileConfiguration> map) {
-                FileConfiguration lang = map.get("lobby.yml");
-                playersCommand = lang.getStringList("premium-permissions");
-            }
-        };
-        HyperNiteMC.getAPI().registerConfig(setter);
+        playersCommand = HyperNiteMC.getAPI().getFactory().getConfigFactory(this).register("lobby.yml", LoginConfig.class).dump().getConfigAs(LoginConfig.class).playersCommand;
         this.getServer().getPluginManager().registerEvents(this, this);
         LuckPerms.getApi().getEventBus().subscribe(UserLoadEvent.class, this::onUserLoad);
         Bukkit.getScheduler().runTaskAsynchronously(this, this::launchRedis);
