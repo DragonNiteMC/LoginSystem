@@ -4,7 +4,7 @@
     <facet type="minecraft" name="Minecraft">
       <configuration>
         <autoDetectTypes>
-          <platformType>BUNGEECORD</platformType>
+          <platformType>WATERFALL</platformType>
         </autoDetectTypes>
       </configuration>
     </facet>
@@ -18,7 +18,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="LoginSystem" />
-    <orderEntry type="library" name="BungeeCord" level="project" />
-    <orderEntry type="library" name="commons-pool2-2.6.0" level="project" />
+    <orderEntry type="library" name="HyperNite-Bungee-API" level="project" />
+    <orderEntry type="library" name="jedis-3.1.0-m1" level="application" />
   </component>
 </module>

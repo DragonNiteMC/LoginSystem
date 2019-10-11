@@ -36,15 +36,18 @@ public class LoginSystem extends JavaPlugin implements Listener {
         };
         HyperNiteMC.getAPI().registerConfig(setter);
         this.getServer().getPluginManager().registerEvents(this, this);
-        Bukkit.getScheduler().runTaskAsynchronously(this, ()->{
-            try(Jedis jedis = RedisManager.getInstance().getRedis()){
-                jedis.subscribe(new ChannelListener(this), "Login-Slave");
-            }catch (JedisException e){
-                this.getLogger().log(Level.SEVERE, "無法連接到 Jedis: "+e.getLocalizedMessage());
-            }
-        });
-
         LuckPerms.getApi().getEventBus().subscribe(UserLoadEvent.class, this::onUserLoad);
+        Bukkit.getScheduler().runTaskAsynchronously(this, this::launchRedis);
+    }
+
+    private void launchRedis(){
+        try(Jedis jedis = RedisManager.getInstance().getRedis()){
+            jedis.subscribe(new ChannelListener(this), "Login-Slave");
+        }catch (JedisException e){
+            this.getLogger().log(Level.SEVERE, "無法連接到 Jedis: "+e.getLocalizedMessage());
+            this.getLogger().log(Level.SEVERE, "一分鐘後再試。");
+            Bukkit.getScheduler().runTaskLaterAsynchronously(this, this::launchRedis, 20*60);
+        }
     }
 
     private void onUserLoad(UserLoadEvent e) {

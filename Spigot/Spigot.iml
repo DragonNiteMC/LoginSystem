@@ -18,7 +18,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="LoginSystem" />
-    <orderEntry type="library" name="Paper-1.14.3" level="project" />
-    <orderEntry type="library" name="commons-pool2-2.6.0" level="project" />
+    <orderEntry type="library" name="HyperNiteMC-API" level="project" />
+    <orderEntry type="library" name="jedis-3.1.0-m1" level="application" />
   </component>
 </module>
