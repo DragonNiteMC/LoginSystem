@@ -8,18 +8,15 @@ import com.ericlam.mc.loginsystem.bungee.commands.EditPasswordCommand;
 import com.ericlam.mc.loginsystem.bungee.commands.LoginCommand;
 import com.ericlam.mc.loginsystem.bungee.commands.RegisterCommand;
 import com.ericlam.mc.loginsystem.bungee.commands.UnRegisterCommand;
+import com.ericlam.mc.loginsystem.bungee.commands.admin.LoginAdminCommand;
 import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 
 public class LoginSystem extends Plugin implements Listener {
 
-    private Set<UUID> cached = new HashSet<>();
     @Override
     public void onEnable() {
         ConfigManager configManager;
@@ -36,5 +33,6 @@ public class LoginSystem extends Plugin implements Listener {
         HyperNiteMC.getAPI().getCommandRegister().registerCommand(this, new RegisterCommand(loginManager, configManager));
         HyperNiteMC.getAPI().getCommandRegister().registerCommand(this, new UnRegisterCommand(loginManager, configManager));
         HyperNiteMC.getAPI().getCommandRegister().registerCommand(this, new EditPasswordCommand(loginManager, configManager));
+        HyperNiteMC.getAPI().getCommandRegister().registerCommand(this, new LoginAdminCommand(loginManager, configManager).getDefaultCommand());
     }
 }

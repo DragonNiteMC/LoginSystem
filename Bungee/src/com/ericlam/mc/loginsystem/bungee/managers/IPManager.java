@@ -17,15 +17,16 @@ public class IPManager {
     }
 
     String updateIP(ProxiedPlayer player) {
+        final String ip = player.getAddress().getAddress().getHostAddress();
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement("UPDATE `LoginData` SET `IP`=? WHERE `UUID`=?")) {
-            statement.setString(1, player.getAddress().getHostName());
+            statement.setString(1, ip);
             statement.setString(2, player.getUniqueId().toString());
             statement.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return player.getAddress().getHostName();
+        return ip;
     }
 
     int checkAccount(String ip) {

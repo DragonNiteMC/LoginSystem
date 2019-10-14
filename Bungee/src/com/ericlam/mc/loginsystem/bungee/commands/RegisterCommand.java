@@ -22,7 +22,7 @@ public class RegisterCommand extends FutureAuthCommandNode{
         if (player.getPendingConnection().isOnlineMode()) throw new PremiumException();
         final String pw = list.get(0);
         final String confirm = list.get(1);
-        if (!loginManager.notLoggedIn(player.getUniqueId())) throw new AlreadyLoggedException();
+        if (!loginManager.notLoggedIn(player)) throw new AlreadyLoggedException();
         return loginManager.isMaxAccount(player).thenComposeAsync((max) -> {
             if (max) {
                 throw new MaxAccountReachedException();

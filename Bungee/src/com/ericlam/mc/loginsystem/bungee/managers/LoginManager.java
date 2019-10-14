@@ -1,5 +1,6 @@
 package com.ericlam.mc.loginsystem.bungee.managers;
 
+import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
 import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
 import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
 import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
@@ -41,7 +42,7 @@ public class LoginManager {
     }
 
     public CompletableFuture<Boolean> isMaxAccount(ProxiedPlayer connection) {
-        final String ip = connection.getAddress().getHostName();
+        final String ip = connection.getAddress().getAddress().getHostAddress();
         return CompletableFuture.supplyAsync(() -> ipManager.checkAccount(ip)).thenApply(i -> i >= configManager.getData("mapi", Integer.class).orElse(3));
     }
 
@@ -97,13 +98,20 @@ public class LoginManager {
         }
     }
 
-    public boolean notLoggedIn(UUID uuid) {
-        return sessionManager.isExpired(uuid);
+    public boolean notLoggedIn(ProxiedPlayer player) {
+        if (ipMap.containsKey(player.getUniqueId())) {
+            String ip = ipMap.get(player.getUniqueId());
+            if (!player.getAddress().getAddress().getHostAddress().equals(ip)) {
+                sessionManager.clearSession(player.getUniqueId());
+                return true;
+            }
+        }
+        return sessionManager.isExpired(player.getUniqueId());
     }
 
     public void login(ProxiedPlayer player, final String password) {
         UUID uuid = player.getUniqueId();
-        if (!sessionManager.isExpired(uuid)) throw new AlreadyLoggedException();
+        if (!sessionManager.isExpired(player.getUniqueId())) throw new AlreadyLoggedException();
         String expected = passwordManager.getPasswordHash(uuid);
         if (expected.isBlank()) throw new AccountNonExistException();
         ResultParser.check(() -> PasswordManager.hashing(password).equals(expected)).ifTrue(() -> this.passLogin(player)).ifFalse(()-> {
@@ -142,9 +150,16 @@ public class LoginManager {
         return CompletableFuture.supplyAsync(() -> ResultParser.check(() -> passwordManager.unregister(player)).ifTrue(() -> sessionManager.clearSession(player)).getResult());
     }
 
+    public void tryKick(UUID player, String path) {
+        ProxiedPlayer proxiedPlayer = ProxyServer.getInstance().getPlayer(player);
+        if (proxiedPlayer != null) {
+            proxiedPlayer.disconnect(new MessageBuilder(configManager.getPureMessage(path)).build());
+        }
+    }
+
     public CompletableFuture<Boolean> register(ProxiedPlayer player, final String password, final String confirmPassword) {
         if (!password.equals(confirmPassword)) throw new ConfirmPasswordFailedException();
-        return CompletableFuture.supplyAsync(() -> ResultParser.check(() -> passwordManager.register(player, password)).ifTrue(() -> sessionManager.addSession(player.getUniqueId())).getResult());
+        return CompletableFuture.supplyAsync(() -> ResultParser.check(() -> passwordManager.register(player, password)).ifTrue(() -> this.passLogin(player)).getResult());
     }
 
     public void loadUserData(UUID uuid) {

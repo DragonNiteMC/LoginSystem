@@ -16,6 +16,9 @@ public class UnregisterCommand extends AdminAuthNode {
 
     @Override
     public CompletableFuture<Boolean> execution(ProxiedPlayer player, List<String> list, OfflinePlayer target) throws AuthException {
-        return loginManager.unregister(target);
+        return loginManager.unregister(target).thenApply(bool -> {
+            if (bool) loginManager.tryKick(target.getUniqueId(), "admin-kick.unregistered");
+            return bool;
+        });
     }
 }

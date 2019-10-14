@@ -18,7 +18,7 @@ public class UnRegisterCommand extends FutureAuthCommandNode {
 
     @Override
     public CompletableFuture<Boolean> executeOperation(ProxiedPlayer player, List<String> list) throws AuthException {
-        if (loginManager.notLoggedIn(player.getUniqueId())){
+        if (loginManager.notLoggedIn(player)) {
             MessageBuilder.sendMessage(player, configManager.getMessage("not-logged-in"));
             return CompletableFuture.completedFuture(false);
         }

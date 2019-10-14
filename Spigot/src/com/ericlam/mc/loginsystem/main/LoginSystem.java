@@ -29,9 +29,9 @@ public class LoginSystem extends JavaPlugin implements Listener {
     private Set<UUID> uuids = new HashSet<>();
 
     @Resource(locate = "lobby.yml")
-    private static class LoginConfig extends Configuration{
+    private static class LoginConfig extends Configuration {
         @Prop(path = "premium-permissions")
-        private List<String> playersCommand;
+        List<String> playersCommand;
     }
 
     @Override

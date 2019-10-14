@@ -17,6 +17,9 @@ public class EditPasswordCommand extends AdminAuthNode {
     @Override
     public CompletableFuture<Boolean> execution(ProxiedPlayer player, List<String> list, OfflinePlayer target) throws AuthException {
         String pw = list.get(0);
-        return loginManager.editPassword(target, pw);
+        return loginManager.editPassword(target, pw).thenApply(bool -> {
+            if (bool) loginManager.tryKick(target.getUniqueId(), "admin-kick.password-edited");
+            return bool;
+        });
     }
 }

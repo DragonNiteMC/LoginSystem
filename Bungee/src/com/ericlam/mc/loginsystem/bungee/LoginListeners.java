@@ -48,9 +48,9 @@ public class LoginListeners implements Listener {
                 ProxiedPlayer player = ProxyServer.getInstance().getPlayer(uuid);
                 if (player == null) return;
                 MessageBuilder.sendMessage(player, configManager.getMessage("need-login"));
-                player.sendTitle(new BungeeTitle().subTitle(TextComponent.fromLegacyText(configManager.getMessage("need-login"))).fadeIn(20).fadeOut(20).stay(10));
+                new BungeeTitle().subTitle(TextComponent.fromLegacyText(configManager.getMessage("need-login"))).fadeIn(20).fadeOut(20).stay(10).send(player);
             });
-        }, 0, 60, TimeUnit.SECONDS);
+        }, 0, 10, TimeUnit.SECONDS);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -71,7 +71,7 @@ public class LoginListeners implements Listener {
         if (!Optional.ofNullable(e.getPlayer().getServer()).map(Server::getInfo).map(ServerInfo::getName).orElse("").equals(lobby))
             return;
         if (e.getTarget().getName().equals(lobby)) return;
-        if (loginManager.notLoggedIn(e.getPlayer().getUniqueId())) {
+        if (loginManager.notLoggedIn(e.getPlayer())) {
             e.setCancelled(true);
             MessageBuilder.sendMessage(e.getPlayer(), notLoggedIn);
         }
@@ -81,10 +81,13 @@ public class LoginListeners implements Listener {
     public void onPlayerChat(final ChatEvent e) {
         if (!(e.getSender() instanceof ProxiedPlayer)) return;
         ProxiedPlayer player = (ProxiedPlayer) e.getSender();
-        UUID uuid = player.getUniqueId();
         String lobby = configManager.getData("lobby", String.class).orElse("lobby");
         if (!player.getServer().getInfo().getName().equals(lobby)) return;
-        if (loginManager.notLoggedIn(uuid)) {
+        if (loginManager.notLoggedIn(player)) {
+            if (e.isProxyCommand() && (e.getMessage().startsWith("/login") || e.getMessage().startsWith("/register"))) {
+                return;
+            }
+            plugin.getLogger().warning(player.getDisplayName() + " trying to type command " + e.getMessage() + " while not logged in.");
             e.setCancelled(true);
             MessageBuilder.sendMessage(player, notLoggedIn);
         }
@@ -148,11 +151,11 @@ public class LoginListeners implements Listener {
                     plugin.getLogger().info("player is not online, skipped");
                     return;
                 }
-                if (premium && loginManager.notLoggedIn(uuid)) {
+                if (premium && loginManager.notLoggedIn(e.getPlayer())) {
                     loginManager.passLogin(player);
                 } else if (!premium) {
                     loginManager.loadUserData(uuid);
-                    if (loginManager.notLoggedIn(uuid)) {
+                    if (loginManager.notLoggedIn(e.getPlayer())) {
                         long secs = configManager.getData("sbf", Integer.class).orElse(60);
                         ScheduledTask task = ProxyServer.getInstance().getScheduler().schedule(plugin, () -> {
                             player.getPlayer().disconnect(TextComponent.fromLegacyText(configManager.getPureMessage("kick-timeout")));
@@ -163,5 +166,4 @@ public class LoginListeners implements Listener {
             });
         });
     }
-
 }
