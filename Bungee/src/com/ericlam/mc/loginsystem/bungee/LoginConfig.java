@@ -1,45 +1,27 @@
 package com.ericlam.mc.loginsystem.bungee;
 
-import com.ericlam.mc.bungee.hnmc.config.ConfigSetter;
-import com.ericlam.mc.bungee.hnmc.config.Extract;
-import net.md_5.bungee.api.plugin.Plugin;
-import net.md_5.bungee.config.Configuration;
+import com.ericlam.mc.bungee.hnmc.config.Prop;
+import com.ericlam.mc.bungee.hnmc.config.yaml.BungeeConfiguration;
+import com.ericlam.mc.bungee.hnmc.config.yaml.Resource;
 
-import java.util.HashMap;
+@Resource(locate = "config.yml")
+public class LoginConfig extends BungeeConfiguration {
 
-public class LoginConfig extends ConfigSetter {
+    @Prop(path = "session-expire")
+    public int expireMins;
 
-    @Extract(name = "em")
-    private int expireMins;
+    @Prop(path = "times-failed-kick")
+    public int timesBeforeFail;
 
-    @Extract(name = "tbf")
-    private int timesBeforeFail;
+    @Prop(path = "sec-failed-kick")
+    public int secBeforeFail;
 
-    @Extract(name = "sbf")
-    private int secBeforeFail;
+    @Prop
+    public String lobby;
 
-    @Extract
-    private String lobby;
+    @Prop(path = "max-ac-per-ip")
+    public int maxAcPerIP;
 
-    @Extract(name = "mapi")
-    private int maxAcPerIP;
-
-
-    @Extract(name = "mlpi")
-    private int maxLoginPerIP;
-
-    public LoginConfig(Plugin plugin) {
-        super(plugin, "config.yml", "lang.yml");
-    }
-
-    @Override
-    public void loadConfig(HashMap<String, Configuration> hashMap) {
-        Configuration config = hashMap.get("config.yml");
-        this.expireMins = config.getInt("session-expire");
-        this.timesBeforeFail = config.getInt("times-failed-kick");
-        this.secBeforeFail = config.getInt("sec-failed-kick");
-        this.lobby = config.getString("lobby");
-        this.maxAcPerIP = config.getInt("max-ac-per-ip");
-        this.maxLoginPerIP = config.getInt("max-login-per-ip");
-    }
+    @Prop(path = "max-login-per-ip")
+    public int maxLoginPerIP;
 }

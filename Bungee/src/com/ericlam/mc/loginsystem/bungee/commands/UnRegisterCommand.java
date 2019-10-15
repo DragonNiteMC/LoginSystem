@@ -1,7 +1,7 @@
 package com.ericlam.mc.loginsystem.bungee.commands;
 
 import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
-import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
+import com.ericlam.mc.bungee.hnmc.config.YamlManager;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AuthException;
 import com.ericlam.mc.loginsystem.bungee.exceptions.PremiumException;
 import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class UnRegisterCommand extends FutureAuthCommandNode {
 
-    public UnRegisterCommand(LoginManager loginManager, ConfigManager configManager) {
+    public UnRegisterCommand(LoginManager loginManager, YamlManager configManager) {
         super(loginManager, configManager, "unregister", "取消註冊", null, "unreg");
     }
 

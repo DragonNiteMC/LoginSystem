@@ -1,10 +1,11 @@
 package com.ericlam.mc.loginsystem.bungee.managers;
 
 import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
-import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
+import com.ericlam.mc.bungee.hnmc.config.YamlManager;
 import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
 import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
 import com.ericlam.mc.loginsystem.ResultParser;
+import com.ericlam.mc.loginsystem.bungee.LoginConfig;
 import com.ericlam.mc.loginsystem.bungee.events.PlayerLoggedEvent;
 import com.ericlam.mc.loginsystem.bungee.exceptions.*;
 import net.md_5.bungee.api.ProxyServer;
@@ -23,17 +24,19 @@ public class LoginManager {
 
     private final PasswordManager passwordManager;
     private final SessionManager sessionManager;
-    private final ConfigManager configManager;
+    private final YamlManager configManager;
+    private final LoginConfig loginConfig;
     private final IPManager ipManager;
     private final Plugin plugin;
     private Map<UUID, Integer> failMap = new HashMap<>();
     private Map<UUID, String> ipMap = new ConcurrentHashMap<>();
 
-    public LoginManager(Plugin plugin, ConfigManager configManager) {
+    public LoginManager(Plugin plugin, YamlManager configManager) {
         this.plugin = plugin;
         this.configManager = configManager;
+        this.loginConfig = configManager.getConfigAs(LoginConfig.class);
         this.passwordManager = new PasswordManager(plugin);
-        this.sessionManager = new SessionManager(configManager);
+        this.sessionManager = new SessionManager(loginConfig);
         this.ipManager = new IPManager();
     }
 
@@ -43,7 +46,7 @@ public class LoginManager {
 
     public CompletableFuture<Boolean> isMaxAccount(ProxiedPlayer connection) {
         final String ip = connection.getAddress().getAddress().getHostAddress();
-        return CompletableFuture.supplyAsync(() -> ipManager.checkAccount(ip)).thenApply(i -> i >= configManager.getData("mapi", Integer.class).orElse(3));
+        return CompletableFuture.supplyAsync(() -> ipManager.checkAccount(ip)).thenApply(i -> i >= loginConfig.maxAcPerIP);
     }
 
     public void updateIPTask(ProxiedPlayer player) {
@@ -59,7 +62,7 @@ public class LoginManager {
     }
 
     public void handleFail(ProxiedPlayer player) {
-        int kick = configManager.getData("tbf", Integer.class).orElse(3);
+        int kick = loginConfig.timesBeforeFail;
         int fail = failMap.getOrDefault(player.getUniqueId(), 0);
         if (fail >= kick){
             player.disconnect(TextComponent.fromLegacyText(configManager.getPureMessage("kick-fail")));

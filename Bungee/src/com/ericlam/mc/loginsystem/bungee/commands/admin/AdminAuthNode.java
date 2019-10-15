@@ -1,7 +1,7 @@
 package com.ericlam.mc.loginsystem.bungee.commands.admin;
 
 import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
-import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
+import com.ericlam.mc.bungee.hnmc.config.YamlManager;
 import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
 import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
 import com.ericlam.mc.loginsystem.bungee.commands.FutureAuthCommandNode;
@@ -16,7 +16,7 @@ public abstract class AdminAuthNode extends FutureAuthCommandNode {
 
     private final String notfound;
 
-    public AdminAuthNode(LoginManager loginManager, ConfigManager configManager, String command, String description, String placeholder, String... alias) {
+    public AdminAuthNode(LoginManager loginManager, YamlManager configManager, String command, String description, String placeholder, String... alias) {
         super(loginManager, configManager, command, description, "<player>" + (placeholder == null ? "" : " " + placeholder), alias);
         this.notfound = HyperNiteMC.getAPI().getMainConfig().getNoThisPlayer();
     }

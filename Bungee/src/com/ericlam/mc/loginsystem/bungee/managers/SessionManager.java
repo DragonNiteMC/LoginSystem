@@ -1,7 +1,7 @@
 package com.ericlam.mc.loginsystem.bungee.managers;
 
-import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
 import com.ericlam.mc.loginsystem.ResultParser;
+import com.ericlam.mc.loginsystem.bungee.LoginConfig;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -13,8 +13,8 @@ class SessionManager {
     private final long sessionMins;
     private Map<UUID, LocalDateTime> sessionMap = new ConcurrentHashMap<>();
 
-    SessionManager(ConfigManager configManager){
-        this.sessionMins = configManager.getData("em", Integer.class).orElse(60);
+    SessionManager(LoginConfig config) {
+        this.sessionMins = config.expireMins;
     }
 
     boolean isExpired(UUID uuid){

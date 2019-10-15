@@ -1,6 +1,6 @@
 package com.ericlam.mc.loginsystem.bungee.commands.admin;
 
-import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
+import com.ericlam.mc.bungee.hnmc.config.YamlManager;
 import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AuthException;
 import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class UnregisterCommand extends AdminAuthNode {
-    UnregisterCommand(LoginManager loginManager, ConfigManager configManager) {
+    UnregisterCommand(LoginManager loginManager, YamlManager configManager) {
         super(loginManager, configManager, "unregister", "取消註冊玩家", null, "unreg");
     }
 

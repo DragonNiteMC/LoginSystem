@@ -2,8 +2,9 @@ package com.ericlam.mc.loginsystem.bungee.commands;
 
 import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
 import com.ericlam.mc.bungee.hnmc.commands.caxerx.CommandNode;
-import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
+import com.ericlam.mc.bungee.hnmc.config.YamlManager;
 import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
+import com.ericlam.mc.loginsystem.bungee.LoginConfig;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AuthException;
 import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
 import net.md_5.bungee.api.CommandSender;
@@ -14,9 +15,9 @@ import java.util.List;
 public abstract class AuthCommandNode extends CommandNode {
 
     protected LoginManager loginManager;
-    protected ConfigManager configManager;
+    protected YamlManager configManager;
 
-    public AuthCommandNode(LoginManager loginManager, ConfigManager configManager, String command, String description, String placeholder, String... alias) {
+    public AuthCommandNode(LoginManager loginManager, YamlManager configManager, String command, String description, String placeholder, String... alias) {
         super(null, command, null, description, placeholder, alias);
         this.loginManager = loginManager;
         this.configManager = configManager;
@@ -29,7 +30,7 @@ public abstract class AuthCommandNode extends CommandNode {
             return;
         }
         ProxiedPlayer player = (ProxiedPlayer) commandSender;
-        String lobby = configManager.getData("lobby", String.class).orElse("lobby");
+        String lobby = configManager.getConfigAs(LoginConfig.class).lobby;
         String locate = player.getServer().getInfo().getName();
         if (!lobby.equals(locate)) {
             MessageBuilder.sendMessage(player, configManager.getMessage("not-in-lobby"));

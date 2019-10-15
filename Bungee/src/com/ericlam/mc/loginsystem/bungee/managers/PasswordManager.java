@@ -49,7 +49,7 @@ public class PasswordManager {
             return Base64.getEncoder().encodeToString(hashed);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
-            return "";
+            return password;
         }
     }
 

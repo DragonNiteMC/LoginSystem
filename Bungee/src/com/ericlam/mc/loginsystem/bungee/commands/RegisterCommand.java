@@ -1,6 +1,6 @@
 package com.ericlam.mc.loginsystem.bungee.commands;
 
-import com.ericlam.mc.bungee.hnmc.config.ConfigManager;
+import com.ericlam.mc.bungee.hnmc.config.YamlManager;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AlreadyLoggedException;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AuthException;
 import com.ericlam.mc.loginsystem.bungee.exceptions.MaxAccountReachedException;
@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class RegisterCommand extends FutureAuthCommandNode{
 
-    public RegisterCommand(LoginManager loginManager, ConfigManager configManager) {
+    public RegisterCommand(LoginManager loginManager, YamlManager configManager) {
         super(loginManager, configManager, "register", "註冊賬戶", "<password> <confirm-password>", "reg");
     }
 
