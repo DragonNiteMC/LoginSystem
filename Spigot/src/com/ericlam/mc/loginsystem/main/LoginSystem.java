@@ -28,12 +28,6 @@ public class LoginSystem extends JavaPlugin implements Listener {
 
     private Set<UUID> uuids = new HashSet<>();
 
-    @Resource(locate = "lobby.yml")
-    private static class LoginConfig extends Configuration {
-        @Prop(path = "premium-permissions")
-        List<String> playersCommand;
-    }
-
     @Override
     public void onEnable() {
         playersCommand = HyperNiteMC.getAPI().getFactory().getConfigFactory(this).register("lobby.yml", LoginConfig.class).dump().getConfigAs(LoginConfig.class).playersCommand;

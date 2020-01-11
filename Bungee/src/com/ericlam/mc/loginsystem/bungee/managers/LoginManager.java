@@ -102,6 +102,7 @@ public class LoginManager {
     }
 
     public boolean notLoggedIn(ProxiedPlayer player) {
+        if (player.getPendingConnection().isOnlineMode()) return false;
         if (ipMap.containsKey(player.getUniqueId())) {
             String ip = ipMap.get(player.getUniqueId());
             if (!player.getAddress().getAddress().getHostAddress().equals(ip)) {

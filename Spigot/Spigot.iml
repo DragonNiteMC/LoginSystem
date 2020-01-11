@@ -19,6 +19,14 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="LoginSystem" />
     <orderEntry type="library" name="HyperNiteMC-API" level="project" />
-    <orderEntry type="library" name="jedis-3.1.0-m1" level="application" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../../../Libraries/others/jedis-3.1.0-m1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
