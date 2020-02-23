@@ -21,7 +21,7 @@ public abstract class FutureAuthCommandNode extends AuthCommandNode {
                 throw (AuthException) throwable;
             }
             String path = "operation." + (aBoolean ? "success" : "failed");
-            MessageBuilder.sendMessage(player, configManager.getMessage(path));
+            MessageBuilder.sendMessage(player, msg.get(path));
         }));
     }
 

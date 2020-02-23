@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>LoginSystem</artifactId>
+        <groupId>com.ericlam.mc</groupId>
+        <version>0.3.3</version>
+    </parent>
+
+    <packaging>jar</packaging>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>Plugin</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.ericlam.mc</groupId>
+            <artifactId>Bungee</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.ericlam.mc</groupId>
+            <artifactId>Spigot</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.2</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+        <finalName>LoginSystem</finalName>
+    </build>
+
+</project>

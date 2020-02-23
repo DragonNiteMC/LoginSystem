@@ -23,7 +23,7 @@ public class UpdateIPCommand extends AdminAuthNode {
             return CompletableFuture.completedFuture(false);
         }
         return loginManager.forceUpdateIP(target.getPlayer()).thenApplyAsync(ip -> {
-            MessageBuilder.sendMessage(player, configManager.getMessage("update-ip").replace("<ip>", ip));
+            MessageBuilder.sendMessage(player, msg.get("update-ip").replace("<ip>", ip));
             return true;
         });
     }

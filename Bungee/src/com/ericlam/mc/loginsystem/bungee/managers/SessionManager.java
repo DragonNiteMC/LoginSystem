@@ -1,6 +1,7 @@
 package com.ericlam.mc.loginsystem.bungee.managers;
 
-import com.ericlam.mc.loginsystem.ResultParser;
+
+import com.ericlam.mc.bungee.hnmc.function.ResultParser;
 import com.ericlam.mc.loginsystem.bungee.LoginConfig;
 
 import java.time.LocalDateTime;
@@ -14,14 +15,14 @@ class SessionManager {
     private Map<UUID, LocalDateTime> sessionMap = new ConcurrentHashMap<>();
 
     SessionManager(LoginConfig config) {
-        this.sessionMins = config.expireMins;
+        this.sessionMins = config.sessionExpireMins;
     }
 
-    boolean isExpired(UUID uuid){
+    boolean isExpired(UUID uuid) {
         return ResultParser.check(() -> Optional.ofNullable(this.sessionMap.get(uuid)).map(ts -> ts.isBefore(LocalDateTime.now())).orElse(true)).ifTrue(() -> this.sessionMap.remove(uuid)).getResult();
     }
 
-    void addSession(UUID uuid){
+    void addSession(UUID uuid) {
         this.sessionMap.put(uuid, LocalDateTime.now().plusMinutes(sessionMins));
     }
 
@@ -29,7 +30,7 @@ class SessionManager {
         this.sessionMap.put(uuid, LocalDateTime.of(9999, 12, 30, 12, 0));
     }
 
-    void clearSession(UUID uuid){
+    void clearSession(UUID uuid) {
         this.sessionMap.remove(uuid);
     }
 

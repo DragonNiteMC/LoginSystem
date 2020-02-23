@@ -1,6 +1,6 @@
-session-expire: 60
-times-failed-kick: 3
-sec-failed-kick: 60
-max-ac-per-ip: 3
-max-login-per-ip: 2
+sessionExpireMins: 60
+timesBeforeFail: 3
+secBeforeFail: 60
+maxAcPerIP: 3
+maxLoginPerIP: 2
 lobby: Lobby

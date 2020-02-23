@@ -6,8 +6,8 @@ import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
 import com.ericlam.mc.bungee.hnmc.events.PlayerVerifyCompletedEvent;
 import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
 import com.ericlam.mc.loginsystem.bungee.events.PlayerLoggedEvent;
+import com.ericlam.mc.loginsystem.bungee.managers.IPManager;
 import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
-import net.md_5.bungee.BungeeTitle;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
@@ -37,20 +37,22 @@ public class LoginListeners implements Listener {
     private final Map<String, String> ipMap = new ConcurrentHashMap<>();
     private final Plugin plugin;
     private final RedisHandler redisHandler;
+    private final LoginLang msg;
 
     public LoginListeners(Plugin plugin, YamlManager configManager, LoginManager loginManager) {
         this.plugin = plugin;
         this.loginManager = loginManager;
         this.configManager = configManager;
         this.loginConfig = configManager.getConfigAs(LoginConfig.class);
+        this.msg = configManager.getConfigAs(LoginLang.class);
         this.redisHandler = new RedisHandler();
-        this.notLoggedIn = configManager.getMessage("not-logged-in");
+        this.notLoggedIn = msg.get("not-logged-in");
         ProxyServer.getInstance().getScheduler().schedule(plugin, () -> {
             timerTasks.keySet().forEach(uuid -> {
                 ProxiedPlayer player = ProxyServer.getInstance().getPlayer(uuid);
                 if (player == null) return;
-                MessageBuilder.sendMessage(player, configManager.getMessage("need-login"));
-                new BungeeTitle().subTitle(TextComponent.fromLegacyText(configManager.getMessage("need-login"))).fadeIn(20).fadeOut(20).stay(10).send(player);
+                MessageBuilder.sendMessage(player, msg.get("need-login"));
+                ProxyServer.getInstance().createTitle().subTitle(TextComponent.fromLegacyText(msg.get("need-login"))).fadeIn(20).fadeOut(20).stay(10).send(player);
             });
         }, 0, 10, TimeUnit.SECONDS);
     }
@@ -59,11 +61,11 @@ public class LoginListeners implements Listener {
     public void onPlayerLogged(final PlayerLoggedEvent e) {
         ProxiedPlayer player = e.getWho();
         UUID uuid = player.getUniqueId();
-        if (e.isCancelled()){
-            MessageBuilder.sendMessage(player, configManager.getMessage("logged-fail"));
-        }else{
+        if (e.isCancelled()) {
+            MessageBuilder.sendMessage(player, msg.get("logged-fail"));
+        } else {
             this.clearTimer(uuid);
-            MessageBuilder.sendMessage(player, configManager.getMessage("logged-in"));
+            MessageBuilder.sendMessage(player, msg.get("logged-in"));
         }
     }
 
@@ -102,8 +104,8 @@ public class LoginListeners implements Listener {
         this.ipMap.remove(e.getPlayer().getName());
     }
 
-    private void clearTimer(UUID uuid){
-        if (timerTasks.containsKey(uuid)){
+    private void clearTimer(UUID uuid) {
+        if (timerTasks.containsKey(uuid)) {
             timerTasks.get(uuid).cancel();
             timerTasks.remove(uuid);
         }
@@ -111,10 +113,10 @@ public class LoginListeners implements Listener {
 
     @EventHandler
     public void onPlayerLogin(final PreLoginEvent e) {
-        String ip = e.getConnection().getAddress().getAddress().getHostAddress();
+        String ip = IPManager.getIP(e.getConnection());
         long amount = this.ipMap.values().stream().filter(address -> address.equals(ip)).count();
         if (amount >= loginConfig.maxLoginPerIP) {
-            e.setCancelReason(new MessageBuilder(configManager.getPureMessage("max-login")).build());
+            e.setCancelReason(new MessageBuilder(msg.getPure("max-login")).build());
             e.setCancelled(true);
             this.ipMap.forEach((k, v) -> {
                 if (ProxyServer.getInstance().getPlayer(k) == null) this.ipMap.remove(k);
@@ -160,7 +162,7 @@ public class LoginListeners implements Listener {
                     if (loginManager.notLoggedIn(e.getPlayer())) {
                         long secs = loginConfig.secBeforeFail;
                         ScheduledTask task = ProxyServer.getInstance().getScheduler().schedule(plugin, () -> {
-                            player.getPlayer().disconnect(TextComponent.fromLegacyText(configManager.getPureMessage("kick-timeout")));
+                            player.getPlayer().disconnect(TextComponent.fromLegacyText(msg.getPure("kick-timeout")));
                         }, secs, TimeUnit.SECONDS);
                         timerTasks.put(uuid, task);
                     }

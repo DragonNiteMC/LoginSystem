@@ -5,6 +5,7 @@ import com.ericlam.mc.bungee.hnmc.commands.caxerx.CommandNode;
 import com.ericlam.mc.bungee.hnmc.config.YamlManager;
 import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
 import com.ericlam.mc.loginsystem.bungee.LoginConfig;
+import com.ericlam.mc.loginsystem.bungee.LoginLang;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AuthException;
 import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
 import net.md_5.bungee.api.CommandSender;
@@ -16,11 +17,13 @@ public abstract class AuthCommandNode extends CommandNode {
 
     protected LoginManager loginManager;
     protected YamlManager configManager;
+    protected LoginLang msg;
 
     public AuthCommandNode(LoginManager loginManager, YamlManager configManager, String command, String description, String placeholder, String... alias) {
         super(null, command, null, description, placeholder, alias);
         this.loginManager = loginManager;
         this.configManager = configManager;
+        this.msg = configManager.getConfigAs(LoginLang.class);
     }
 
     @Override
@@ -33,13 +36,13 @@ public abstract class AuthCommandNode extends CommandNode {
         String lobby = configManager.getConfigAs(LoginConfig.class).lobby;
         String locate = player.getServer().getInfo().getName();
         if (!lobby.equals(locate)) {
-            MessageBuilder.sendMessage(player, configManager.getMessage("not-in-lobby"));
+            MessageBuilder.sendMessage(player, msg.get("not-in-lobby"));
             return;
         }
         try{
             executeAuth(player, list);
         }catch (AuthException e){
-            MessageBuilder.sendMessage(player, configManager.getMessage(e.getPath()));
+            MessageBuilder.sendMessage(player, msg.get(e.getPath()));
         }
     }
 

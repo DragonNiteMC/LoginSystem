@@ -3,9 +3,10 @@ package com.ericlam.mc.loginsystem.bungee.managers;
 import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
 import com.ericlam.mc.bungee.hnmc.config.YamlManager;
 import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
+import com.ericlam.mc.bungee.hnmc.function.ResultParser;
 import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
-import com.ericlam.mc.loginsystem.ResultParser;
 import com.ericlam.mc.loginsystem.bungee.LoginConfig;
+import com.ericlam.mc.loginsystem.bungee.LoginLang;
 import com.ericlam.mc.loginsystem.bungee.events.PlayerLoggedEvent;
 import com.ericlam.mc.loginsystem.bungee.exceptions.*;
 import net.md_5.bungee.api.ProxyServer;
@@ -26,6 +27,7 @@ public class LoginManager {
     private final SessionManager sessionManager;
     private final YamlManager configManager;
     private final LoginConfig loginConfig;
+    private final LoginLang msg;
     private final IPManager ipManager;
     private final Plugin plugin;
     private Map<UUID, Integer> failMap = new HashMap<>();
@@ -35,6 +37,7 @@ public class LoginManager {
         this.plugin = plugin;
         this.configManager = configManager;
         this.loginConfig = configManager.getConfigAs(LoginConfig.class);
+        this.msg = configManager.getConfigAs(LoginLang.class);
         this.passwordManager = new PasswordManager(plugin);
         this.sessionManager = new SessionManager(loginConfig);
         this.ipManager = new IPManager();
@@ -45,7 +48,7 @@ public class LoginManager {
     }
 
     public CompletableFuture<Boolean> isMaxAccount(ProxiedPlayer connection) {
-        final String ip = connection.getAddress().getAddress().getHostAddress();
+        final String ip = IPManager.getIP(connection);
         return CompletableFuture.supplyAsync(() -> ipManager.checkAccount(ip)).thenApply(i -> i >= loginConfig.maxAcPerIP);
     }
 
@@ -64,8 +67,8 @@ public class LoginManager {
     public void handleFail(ProxiedPlayer player) {
         int kick = loginConfig.timesBeforeFail;
         int fail = failMap.getOrDefault(player.getUniqueId(), 0);
-        if (fail >= kick){
-            player.disconnect(TextComponent.fromLegacyText(configManager.getPureMessage("kick-fail")));
+        if (fail >= kick) {
+            player.disconnect(TextComponent.fromLegacyText(msg.getPure("kick-fail")));
             this.clearFail(player);
         }
     }
@@ -102,10 +105,10 @@ public class LoginManager {
     }
 
     public boolean notLoggedIn(ProxiedPlayer player) {
-        if (player.getPendingConnection().isOnlineMode()) return false;
+        //if (player.getPendingConnection().isOnlineMode()) return false;
         if (ipMap.containsKey(player.getUniqueId())) {
             String ip = ipMap.get(player.getUniqueId());
-            if (!player.getAddress().getAddress().getHostAddress().equals(ip)) {
+            if (!IPManager.getIP(player).equals(ip)) {
                 sessionManager.clearSession(player.getUniqueId());
                 return true;
             }
@@ -118,7 +121,7 @@ public class LoginManager {
         if (!sessionManager.isExpired(player.getUniqueId())) throw new AlreadyLoggedException();
         String expected = passwordManager.getPasswordHash(uuid);
         if (expected.isBlank()) throw new AccountNonExistException();
-        ResultParser.check(() -> PasswordManager.hashing(password).equals(expected)).ifTrue(() -> this.passLogin(player)).ifFalse(()-> {
+        ResultParser.check(() -> PasswordManager.hashing(password).equals(expected)).ifTrue(() -> this.passLogin(player)).ifFalse(() -> {
             failMap.computeIfPresent(player.getUniqueId(), (p, v) -> ++v);
             failMap.putIfAbsent(player.getUniqueId(), 1);
             this.handleFail(player);
@@ -157,7 +160,7 @@ public class LoginManager {
     public void tryKick(UUID player, String path) {
         ProxiedPlayer proxiedPlayer = ProxyServer.getInstance().getPlayer(player);
         if (proxiedPlayer != null) {
-            proxiedPlayer.disconnect(new MessageBuilder(configManager.getPureMessage(path)).build());
+            proxiedPlayer.disconnect(new MessageBuilder(msg.getPure(path)).build());
         }
     }
 

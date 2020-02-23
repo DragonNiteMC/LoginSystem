@@ -1,15 +1,14 @@
 package com.ericlam.mc.loginsystem.main;
 
-import com.ericlam.mc.loginsystem.RedisManager;
 import com.ericlam.mc.loginsystem.redis.ChannelListener;
-import com.hypernite.mc.hnmc.core.config.Prop;
-import com.hypernite.mc.hnmc.core.config.yaml.Configuration;
-import com.hypernite.mc.hnmc.core.config.yaml.Resource;
 import com.hypernite.mc.hnmc.core.main.HyperNiteMC;
-import me.lucko.luckperms.LuckPerms;
-import me.lucko.luckperms.api.LuckPermsApi;
-import me.lucko.luckperms.api.Node;
-import me.lucko.luckperms.api.event.user.UserLoadEvent;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.context.DefaultContextKeys;
+import net.luckperms.api.event.user.UserLoadEvent;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.node.Node;
+import net.luckperms.api.node.NodeEqualityPredicate;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -28,42 +27,52 @@ public class LoginSystem extends JavaPlugin implements Listener {
 
     private Set<UUID> uuids = new HashSet<>();
 
+    private LuckPerms luckPerms;
+
+    public static boolean hasPermission(User user, Node perm) {
+        return user.data().contains(perm, NodeEqualityPredicate.EXACT).asBoolean();
+    }
+
     @Override
     public void onEnable() {
-        playersCommand = HyperNiteMC.getAPI().getFactory().getConfigFactory(this).register("lobby.yml", LoginConfig.class).dump().getConfigAs(LoginConfig.class).playersCommand;
+        playersCommand = HyperNiteMC.getAPI().getFactory().getConfigFactory(this).register("lobby.yml", LoginConfig.class).dump().getConfigAs(LoginConfig.class).premiumPermissions;
+        luckPerms = LuckPermsProvider.get();
         this.getServer().getPluginManager().registerEvents(this, this);
-        LuckPerms.getApi().getEventBus().subscribe(UserLoadEvent.class, this::onUserLoad);
+        luckPerms.getEventBus().subscribe(UserLoadEvent.class, this::onUserLoad);
         Bukkit.getScheduler().runTaskAsynchronously(this, this::launchRedis);
     }
 
-    private void launchRedis(){
-        try(Jedis jedis = RedisManager.getInstance().getRedis()){
+    private void launchRedis() {
+        try (Jedis jedis = HyperNiteMC.getAPI().getRedisDataSource().getJedis()) {
             jedis.subscribe(new ChannelListener(this), "Login-Slave");
-        }catch (JedisException e){
-            this.getLogger().log(Level.SEVERE, "無法連接到 Jedis: "+e.getLocalizedMessage());
+        } catch (JedisException e) {
+            this.getLogger().log(Level.SEVERE, "無法連接到 Jedis: " + e.getLocalizedMessage());
             this.getLogger().log(Level.SEVERE, "一分鐘後再試。");
-            Bukkit.getScheduler().runTaskLaterAsynchronously(this, this::launchRedis, 20*60);
+            Bukkit.getScheduler().runTaskLaterAsynchronously(this, this::launchRedis, 20 * 60);
         }
     }
 
     private void onUserLoad(UserLoadEvent e) {
-        LuckPermsApi api = LuckPerms.getApi();
-        if (!this.uuids.contains(e.getUser().getUuid())) return;
+        if (!this.uuids.contains(e.getUser().getUniqueId())) return;
         boolean save = false;
+        boolean success = true;
         for (String perm : playersCommand) {
-            Node node = api.getNodeFactory().newBuilder(perm).setValue(true).setServer("global").build();
-            if (!e.getUser().hasPermission(node).asBoolean()) {
+            Node node = Node.builder(perm)
+                    .value(true)
+                    .withContext(DefaultContextKeys.SERVER_KEY, "global")
+                    .build();
+            if (!hasPermission(e.getUser(), node)) {
                 save = true;
-                e.getUser().setPermission(node);
-                this.getLogger().info("adding permission `" + node.getPermission() + "` to " + e.getUser().getName());
+                success = e.getUser().data().add(node).wasSuccessful();
+                var result = success ? "Successfully" : "Failure for";
+                this.getLogger().info(result + " added permission `" + perm + "` to " + e.getUser().getUsername());
             }
         }
-        if (save) {
-            api.getUserManager().saveUser(e.getUser())
-                    .thenComposeAsync(v -> e.getUser().refreshCachedData())
-                    .whenComplete((v, ex) -> this.getLogger().info("Adding Completed."));
+        if (save && success) {
+            luckPerms.getUserManager().saveUser(e.getUser())
+                    .whenComplete((v, ex) -> this.getLogger().info("Saved Completed."));
         }
-        this.uuids.remove(e.getUser().getUuid());
+        this.uuids.remove(e.getUser().getUniqueId());
     }
 
     public void gainPermission(UUID uuid) {

@@ -60,7 +60,7 @@ public class PasswordManager {
             statement.setString(1, player.getUniqueId().toString());
             statement.setString(2, player.getName());
             statement.setString(3, encoded);
-            statement.setString(4, player.getAddress().getAddress().getHostAddress());
+            statement.setString(4, IPManager.getIP(player));
             int result = statement.executeUpdate();
             if (result == 0) throw new AlreadyRegisteredException();
             passwordMap.putIfAbsent(player.getUniqueId(), encoded);

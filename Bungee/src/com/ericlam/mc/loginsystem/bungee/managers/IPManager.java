@@ -4,6 +4,7 @@ import com.ericlam.mc.bungee.hnmc.SQLDataSource;
 import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
+import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,8 +17,12 @@ public class IPManager {
         this.dataSource = HyperNiteMC.getAPI().getSQLDataSource();
     }
 
+    public static String getIP(net.md_5.bungee.api.connection.Connection connection) {
+        return ((InetSocketAddress) connection.getSocketAddress()).getAddress().getHostAddress();
+    }
+
     String updateIP(ProxiedPlayer player) {
-        final String ip = player.getAddress().getAddress().getHostAddress();
+        final String ip = getIP(player);
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement("UPDATE `LoginData` SET `IP`=? WHERE `UUID`=?")) {
             statement.setString(1, ip);
