@@ -105,11 +105,13 @@ public class LoginManager {
     }
 
     public boolean notLoggedIn(ProxiedPlayer player) {
-        //if (player.getPendingConnection().isOnlineMode()) return false;
         if (ipMap.containsKey(player.getUniqueId())) {
             String ip = ipMap.get(player.getUniqueId());
             if (!IPManager.getIP(player).equals(ip)) {
                 sessionManager.clearSession(player.getUniqueId());
+                if (player.getPendingConnection().isOnlineMode()) {
+                    sessionManager.addPremiumSession(player.getUniqueId());
+                }
                 return true;
             }
         }
