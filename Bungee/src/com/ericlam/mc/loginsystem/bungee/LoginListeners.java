@@ -26,15 +26,15 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 public class LoginListeners implements Listener {
 
     private final LoginManager loginManager;
-    private final YamlManager configManager;
     private final LoginConfig loginConfig;
     private final String notLoggedIn;
     private final Map<UUID, ScheduledTask> timerTasks = new HashMap<>();
-    private final Map<String, String> ipMap = new ConcurrentHashMap<>();
+    private final Map<String, String> loginIpMap = new ConcurrentHashMap<>();
     private final Plugin plugin;
     private final RedisHandler redisHandler;
     private final LoginLang msg;
@@ -42,7 +42,6 @@ public class LoginListeners implements Listener {
     public LoginListeners(Plugin plugin, YamlManager configManager, LoginManager loginManager) {
         this.plugin = plugin;
         this.loginManager = loginManager;
-        this.configManager = configManager;
         this.loginConfig = configManager.getConfigAs(LoginConfig.class);
         this.msg = configManager.getConfigAs(LoginLang.class);
         this.redisHandler = new RedisHandler();
@@ -101,7 +100,7 @@ public class LoginListeners implements Listener {
     public void onPlayerQuit(final PlayerDisconnectEvent e) {
         loginManager.clearFail(e.getPlayer());
         this.clearTimer(e.getPlayer().getUniqueId());
-        this.ipMap.remove(e.getPlayer().getName());
+        this.loginIpMap.remove(e.getPlayer().getName());
     }
 
     private void clearTimer(UUID uuid) {
@@ -114,16 +113,16 @@ public class LoginListeners implements Listener {
     @EventHandler
     public void onPlayerLogin(final PreLoginEvent e) {
         String ip = IPManager.getIP(e.getConnection());
-        long amount = this.ipMap.values().stream().filter(address -> address.equals(ip)).count();
+        long amount = this.loginIpMap.values().stream().filter(address -> address.equals(ip)).count();
         if (amount >= loginConfig.maxLoginPerIP) {
             e.setCancelReason(new MessageBuilder(msg.getPure("max-login")).build());
             e.setCancelled(true);
-            this.ipMap.forEach((k, v) -> {
-                if (ProxyServer.getInstance().getPlayer(k) == null) this.ipMap.remove(k);
+            this.loginIpMap.forEach((k, v) -> {
+                if (ProxyServer.getInstance().getPlayer(k) == null) this.loginIpMap.remove(k);
             });
             return;
         }
-        this.ipMap.put(e.getConnection().getName(), ip);
+        this.loginIpMap.put(e.getConnection().getName(), ip);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -144,10 +143,9 @@ public class LoginListeners implements Listener {
         loginManager.updateIPTask(e.getPlayer());
         HyperNiteMC.getAPI().getPlayerManager().getOfflinePlayer(e.getPlayer().getUniqueId()).whenComplete((offlinePlayer, throwable) -> {
             if (throwable != null) {
-                throwable.printStackTrace();
+                plugin.getLogger().log(Level.SEVERE, throwable, throwable::getMessage);
                 return;
             }
-
             offlinePlayer.ifPresent(player -> {
                 boolean premium = player.isPremium();
                 UUID uuid = player.getUniqueId();
@@ -155,9 +153,12 @@ public class LoginListeners implements Listener {
                     plugin.getLogger().info("player is not online, skipped");
                     return;
                 }
+
                 if (premium && loginManager.notLoggedIn(e.getPlayer())) {
+                    plugin.getLogger().info("player is premium but has not logged in, added premium session");
                     loginManager.passLogin(player);
                 } else if (!premium) {
+                    plugin.getLogger().info("player is not premium and not logged in, asked for login");
                     loginManager.loadUserData(uuid);
                     if (loginManager.notLoggedIn(e.getPlayer())) {
                         long secs = loginConfig.secBeforeFail;

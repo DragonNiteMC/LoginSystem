@@ -5,7 +5,7 @@
     <parent>
         <artifactId>LoginSystem</artifactId>
         <groupId>com.ericlam.mc</groupId>
-        <version>0.3.5</version>
+        <version>0.3.6.2</version>
     </parent>
 
     <packaging>jar</packaging>

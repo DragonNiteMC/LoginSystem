@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.ericlam.mc</groupId>
         <artifactId>LoginSystem</artifactId>
-        <version>0.3.5</version>
+        <version>0.3.6.2</version>
     </parent>
 
     <artifactId>Bungee</artifactId>

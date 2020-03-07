@@ -25,17 +25,15 @@ public class LoginManager {
 
     private final PasswordManager passwordManager;
     private final SessionManager sessionManager;
-    private final YamlManager configManager;
     private final LoginConfig loginConfig;
     private final LoginLang msg;
     private final IPManager ipManager;
     private final Plugin plugin;
     private Map<UUID, Integer> failMap = new HashMap<>();
-    private Map<UUID, String> ipMap = new ConcurrentHashMap<>();
+    private Map<UUID, String> loginSessionMap = new ConcurrentHashMap<>();
 
     public LoginManager(Plugin plugin, YamlManager configManager) {
         this.plugin = plugin;
-        this.configManager = configManager;
         this.loginConfig = configManager.getConfigAs(LoginConfig.class);
         this.msg = configManager.getConfigAs(LoginLang.class);
         this.passwordManager = new PasswordManager(plugin);
@@ -53,8 +51,16 @@ public class LoginManager {
     }
 
     public void updateIPTask(ProxiedPlayer player) {
-        if (ipMap.containsKey(player.getUniqueId())) return;
-        this.forceUpdateIP(player).thenAccept(ip -> this.ipMap.put(player.getUniqueId(), ip)).whenComplete((v, ex) -> {
+        if (loginSessionMap.containsKey(player.getUniqueId())) {
+            String ip = loginSessionMap.get(player.getUniqueId());
+            String nowIP = IPManager.getIP(player);
+            if (nowIP.equals(ip)) {
+                return;
+            }
+            plugin.getLogger().info(player.getDisplayName() + " ip does not match (old: " + ip + ", latest: " + nowIP + ")");
+            sessionManager.clearSession(player.getUniqueId());
+        }
+        this.forceUpdateIP(player).thenAccept(ip -> this.loginSessionMap.put(player.getUniqueId(), ip)).whenComplete((v, ex) -> {
             if (ex != null) {
                 ex.printStackTrace();
                 ProxyServer.getInstance().getLogger().log(Level.SEVERE, ex.getMessage());
@@ -105,16 +111,6 @@ public class LoginManager {
     }
 
     public boolean notLoggedIn(ProxiedPlayer player) {
-        if (ipMap.containsKey(player.getUniqueId())) {
-            String ip = ipMap.get(player.getUniqueId());
-            if (!IPManager.getIP(player).equals(ip)) {
-                sessionManager.clearSession(player.getUniqueId());
-                if (player.getPendingConnection().isOnlineMode()) {
-                    sessionManager.addPremiumSession(player.getUniqueId());
-                }
-                return true;
-            }
-        }
         return sessionManager.isExpired(player.getUniqueId());
     }
 
