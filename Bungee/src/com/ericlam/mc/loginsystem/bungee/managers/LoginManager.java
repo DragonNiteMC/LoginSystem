@@ -4,7 +4,6 @@ import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
 import com.ericlam.mc.bungee.hnmc.config.YamlManager;
 import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
 import com.ericlam.mc.bungee.hnmc.function.ResultParser;
-import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
 import com.ericlam.mc.loginsystem.bungee.LoginConfig;
 import com.ericlam.mc.loginsystem.bungee.LoginLang;
 import com.ericlam.mc.loginsystem.bungee.events.PlayerLoggedEvent;
@@ -29,8 +28,8 @@ public class LoginManager {
     private final LoginLang msg;
     private final IPManager ipManager;
     private final Plugin plugin;
-    private Map<UUID, Integer> failMap = new HashMap<>();
-    private Map<UUID, String> loginSessionMap = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> failMap = new HashMap<>();
+    private final Map<UUID, String> loginSessionMap = new ConcurrentHashMap<>();
 
     public LoginManager(Plugin plugin, YamlManager configManager) {
         this.plugin = plugin;
@@ -70,7 +69,9 @@ public class LoginManager {
         });
     }
 
-    public void handleFail(ProxiedPlayer player) {
+    private void handleFail(ProxiedPlayer player) {
+        failMap.computeIfPresent(player.getUniqueId(), (p, v) -> ++v);
+        failMap.putIfAbsent(player.getUniqueId(), 1);
         int kick = loginConfig.timesBeforeFail;
         int fail = failMap.getOrDefault(player.getUniqueId(), 0);
         if (fail >= kick) {
@@ -84,29 +85,13 @@ public class LoginManager {
     }
 
     public void passLogin(ProxiedPlayer player) {
-        HyperNiteMC.getAPI().getPlayerManager().getOfflinePlayer(player.getUniqueId()).whenComplete((offlinePlayer, throwable) -> {
-            if (throwable != null) {
-                throwable.printStackTrace();
-                return;
-            }
-            offlinePlayer.ifPresent(this::passLogin);
-        });
-    }
-
-    public void passLogin(OfflinePlayer player) {
-        if (!player.isOnline()) return;
-        PlayerLoggedEvent event = new PlayerLoggedEvent(player.getPlayer(), player.isPremium());
+        PlayerLoggedEvent event = new PlayerLoggedEvent(player, failMap.getOrDefault(player.getUniqueId(), 0), System.currentTimeMillis());
         ProxyServer.getInstance().getPluginManager().callEvent(event);
         if (!event.isCancelled()) {
-            if (player.isPremium()) {
-                sessionManager.addPremiumSession(player.getUniqueId());
-            } else {
-                sessionManager.addSession(player.getUniqueId());
-            }
+            sessionManager.addSession(player.getUniqueId());
             failMap.remove(player.getUniqueId());
         } else {
-            failMap.computeIfPresent(player.getUniqueId(), (p, v) -> ++v);
-            this.handleFail(player.getPlayer());
+            this.handleFail(player);
         }
     }
 
@@ -114,34 +99,35 @@ public class LoginManager {
         return sessionManager.isExpired(player.getUniqueId());
     }
 
-    public void login(ProxiedPlayer player, final String password) {
-        UUID uuid = player.getUniqueId();
+    public void login(ProxiedPlayer player, final String password) throws AlreadyLoggedException, AccountNonExistException {
         if (!sessionManager.isExpired(player.getUniqueId())) throw new AlreadyLoggedException();
-        String expected = passwordManager.getPasswordHash(uuid);
-        if (expected.isBlank()) throw new AccountNonExistException();
-        ResultParser.check(() -> PasswordManager.hashing(password).equals(expected)).ifTrue(() -> this.passLogin(player)).ifFalse(() -> {
-            failMap.computeIfPresent(player.getUniqueId(), (p, v) -> ++v);
-            failMap.putIfAbsent(player.getUniqueId(), 1);
+        if (passwordManager.matchPassword(player.getUniqueId(), password)) {
+            this.passLogin(player);
+        } else {
             this.handleFail(player);
             throw new WrongPasswordException();
-        });
+        }
     }
 
-    public CompletableFuture<Boolean> editPassword(OfflinePlayer player, final String newPassword) {
-        return this.editPassword(player.getUniqueId(), player.getName(), passwordManager.getPasswordHash(player.getUniqueId()), newPassword);
+    // admin
+    public CompletableFuture<Boolean> editPassword(OfflinePlayer player, final String newPassword) throws SamePasswordException, WrongPasswordException {
+        return this.editPassword(player.getUniqueId(), player.getName(), passwordManager.getPasswordHash(player.getUniqueId()).orElse(""), newPassword);
     }
 
-    public CompletableFuture<Boolean> editPassword(ProxiedPlayer player, final String password, final String newPassword) {
-        return this.editPassword(player.getUniqueId(), player.getName(), PasswordManager.hashing(password), newPassword);
+    // user
+    public CompletableFuture<Boolean> editPassword(ProxiedPlayer player, final String oldPw, final String newPassword) throws SamePasswordException, WrongPasswordException {
+        return this.editPassword(player.getUniqueId(), player.getName(), oldPw, newPassword);
     }
 
-    private CompletableFuture<Boolean> editPassword(UUID uuid, String name, final String passwordHashed, final String newPassword) {
-        final String newPasswordHashed = PasswordManager.hashing(newPassword);
-        if (passwordHashed.equals(newPasswordHashed)) throw new SamePasswordException();
-        final String oldHash = passwordManager.getPasswordHash(uuid);
-        if (!oldHash.equals(passwordHashed)) throw new WrongPasswordException();
-        return CompletableFuture.supplyAsync(() -> ResultParser.check(() -> passwordManager.editPassword(uuid, name, newPassword)).ifTrue(() -> sessionManager.clearSession(uuid)).getResult());
+    private CompletableFuture<Boolean> editPassword(UUID uuid, String name, final String oldPw, final String newPassword) throws SamePasswordException, WrongPasswordException {
+        var newHashed = PasswordManager.hashing(newPassword);
+        var oldHashed = PasswordManager.hashing(oldPw);
+        var oldPassword = passwordManager.getPasswordHash(uuid).orElse("");
+        if (!oldPassword.equals(oldPw)) throw new WrongPasswordException();
+        if (oldHashed.equals(newHashed)) throw new SamePasswordException();
+        return CompletableFuture.supplyAsync(() -> passwordManager.editPassword(uuid, name, newPassword));
     }
+
 
     public CompletableFuture<Boolean> unregister(OfflinePlayer player) {
         return this.unregister(player.getUniqueId());
@@ -167,8 +153,11 @@ public class LoginManager {
         return CompletableFuture.supplyAsync(() -> ResultParser.check(() -> passwordManager.register(player, password)).ifTrue(() -> this.passLogin(player)).getResult());
     }
 
-    public void loadUserData(UUID uuid) {
-        ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> passwordManager.getFromSQL(uuid));
+    public void loadUserData(UUID uuid, Runnable callback) {
+        ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
+            passwordManager.getFromSQL(uuid);
+            callback.run();
+        });
     }
 
 

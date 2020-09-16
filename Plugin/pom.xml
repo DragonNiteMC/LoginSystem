@@ -5,7 +5,7 @@
     <parent>
         <artifactId>LoginSystem</artifactId>
         <groupId>com.ericlam.mc</groupId>
-        <version>0.3.6.2</version>
+        <version>0.3.7</version>
     </parent>
 
     <packaging>jar</packaging>
@@ -41,7 +41,7 @@
                 </executions>
             </plugin>
         </plugins>
-        <finalName>LoginSystem</finalName>
+        <finalName>${parent.artifactId}-${project.version}</finalName>
     </build>
 
 </project>

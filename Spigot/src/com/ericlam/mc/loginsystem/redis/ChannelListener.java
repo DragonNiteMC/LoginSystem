@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public class ChannelListener extends JedisPubSub {
 
-    private LoginSystem loginSystem;
+    private final LoginSystem loginSystem;
 
     public ChannelListener(LoginSystem loginSystem) {
         this.loginSystem = loginSystem;

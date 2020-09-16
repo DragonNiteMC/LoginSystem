@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.ericlam.mc</groupId>
         <artifactId>LoginSystem</artifactId>
-        <version>0.3.6.2</version>
+        <version>0.3.7</version>
     </parent>
 
     <artifactId>Bungee</artifactId>
@@ -25,9 +25,8 @@
             <artifactId>bungee-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>net.md-5</groupId>
-            <artifactId>bungeecord-api</artifactId>
-            <version>1.15-SNAPSHOT</version>
+            <groupId>waterfall</groupId>
+            <artifactId>1.16</artifactId>
         </dependency>
     </dependencies>
 </project>

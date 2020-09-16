@@ -4,7 +4,6 @@ import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
 import com.ericlam.mc.bungee.hnmc.config.YamlManager;
 import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
 import com.ericlam.mc.bungee.hnmc.events.PlayerVerifyCompletedEvent;
-import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
 import com.ericlam.mc.loginsystem.bungee.events.PlayerLoggedEvent;
 import com.ericlam.mc.loginsystem.bungee.managers.IPManager;
 import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
@@ -20,24 +19,21 @@ import net.md_5.bungee.api.scheduler.ScheduledTask;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 public class LoginListeners implements Listener {
 
     private final LoginManager loginManager;
     private final LoginConfig loginConfig;
     private final String notLoggedIn;
-    private final Map<UUID, ScheduledTask> timerTasks = new HashMap<>();
+    private final Map<UUID, ScheduledTask> timerTasks = new ConcurrentHashMap<>();
     private final Map<String, String> loginIpMap = new ConcurrentHashMap<>();
     private final Plugin plugin;
     private final RedisHandler redisHandler;
     private final LoginLang msg;
+    private final Set<UUID> premiumPlayers = new HashSet<>();
 
     public LoginListeners(Plugin plugin, YamlManager configManager, LoginManager loginManager) {
         this.plugin = plugin;
@@ -56,6 +52,11 @@ public class LoginListeners implements Listener {
         }, 0, 10, TimeUnit.SECONDS);
     }
 
+
+    private boolean isPremium(ProxiedPlayer player) {
+        return premiumPlayers.contains(player.getUniqueId());
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerLogged(final PlayerLoggedEvent e) {
         ProxiedPlayer player = e.getWho();
@@ -70,6 +71,7 @@ public class LoginListeners implements Listener {
 
     @EventHandler
     public void onServerConnect(final ServerConnectEvent e) {
+        if (isPremium(e.getPlayer())) return;
         String lobby = loginConfig.lobby;
         if (!Optional.ofNullable(e.getPlayer().getServer()).map(Server::getInfo).map(ServerInfo::getName).orElse("").equals(lobby))
             return;
@@ -84,6 +86,7 @@ public class LoginListeners implements Listener {
     public void onPlayerChat(final ChatEvent e) {
         if (!(e.getSender() instanceof ProxiedPlayer)) return;
         ProxiedPlayer player = (ProxiedPlayer) e.getSender();
+        if (isPremium(player)) return;
         String lobby = loginConfig.lobby;
         if (!player.getServer().getInfo().getName().equals(lobby)) return;
         if (loginManager.notLoggedIn(player)) {
@@ -98,6 +101,7 @@ public class LoginListeners implements Listener {
 
     @EventHandler
     public void onPlayerQuit(final PlayerDisconnectEvent e) {
+        premiumPlayers.remove(e.getPlayer().getUniqueId());
         loginManager.clearFail(e.getPlayer());
         this.clearTimer(e.getPlayer().getUniqueId());
         this.loginIpMap.remove(e.getPlayer().getName());
@@ -130,45 +134,31 @@ public class LoginListeners implements Listener {
         e.registerIntent(plugin);
         OfflinePlayer player = e.getOfflinePlayer();
         if (!player.isPremium()) {
-            e.completeIntent(plugin);
+            loginManager.loadUserData(player.getUniqueId(), () -> e.completeIntent(plugin));
             return;
         }
         plugin.getLogger().info("Telling lobby to gain permission for " + player.getName());
-        redisHandler.permissionGainPublish(player.getUniqueId());
+        premiumPlayers.add(player.getUniqueId());
+        ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> redisHandler.permissionGainPublish(player.getUniqueId()));
         e.completeIntent(plugin);
     }
 
     @EventHandler
     public void onPlayerJoin(final PostLoginEvent e) {
-        loginManager.updateIPTask(e.getPlayer());
-        HyperNiteMC.getAPI().getPlayerManager().getOfflinePlayer(e.getPlayer().getUniqueId()).whenComplete((offlinePlayer, throwable) -> {
-            if (throwable != null) {
-                plugin.getLogger().log(Level.SEVERE, throwable, throwable::getMessage);
-                return;
+        var player = e.getPlayer();
+        loginManager.updateIPTask(player);
+        if (isPremium(player)) {
+            plugin.getLogger().info("player is premium, skipped login");
+        } else {
+            plugin.getLogger().info("player is not premium");
+            if (loginManager.notLoggedIn(e.getPlayer())) {
+                plugin.getLogger().info("player is not premium and not logged in.");
+                long secs = loginConfig.secBeforeFail;
+                ScheduledTask task = ProxyServer.getInstance().getScheduler().schedule(plugin, () -> {
+                    player.disconnect(TextComponent.fromLegacyText(msg.getPure("kick-timeout")));
+                }, secs, TimeUnit.SECONDS);
+                timerTasks.put(player.getUniqueId(), task);
             }
-            offlinePlayer.ifPresent(player -> {
-                boolean premium = player.isPremium();
-                UUID uuid = player.getUniqueId();
-                if (!player.isOnline()) {
-                    plugin.getLogger().info("player is not online, skipped");
-                    return;
-                }
-
-                if (premium && loginManager.notLoggedIn(e.getPlayer())) {
-                    plugin.getLogger().info("player is premium but has not logged in, added premium session");
-                    loginManager.passLogin(player);
-                } else if (!premium) {
-                    plugin.getLogger().info("player is not premium and not logged in, asked for login");
-                    loginManager.loadUserData(uuid);
-                    if (loginManager.notLoggedIn(e.getPlayer())) {
-                        long secs = loginConfig.secBeforeFail;
-                        ScheduledTask task = ProxyServer.getInstance().getScheduler().schedule(plugin, () -> {
-                            player.getPlayer().disconnect(TextComponent.fromLegacyText(msg.getPure("kick-timeout")));
-                        }, secs, TimeUnit.SECONDS);
-                        timerTasks.put(uuid, task);
-                    }
-                }
-            });
-        });
+        }
     }
 }

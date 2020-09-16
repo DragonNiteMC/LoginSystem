@@ -11,7 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class IPManager {
-    private SQLDataSource dataSource;
+    private final SQLDataSource dataSource;
 
     public IPManager() {
         this.dataSource = HyperNiteMC.getAPI().getSQLDataSource();

@@ -18,15 +18,12 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 
 public class PasswordManager {
 
-    private SQLDataSource sqlDataSource;
-    private Map<UUID, String> passwordMap = new ConcurrentHashMap<>();
+    private final SQLDataSource sqlDataSource;
+    private final Map<UUID, String> passwordMap = new ConcurrentHashMap<>();
 
     PasswordManager(Plugin plugin) {
         this.sqlDataSource = HyperNiteMC.getAPI().getSQLDataSource();
@@ -39,6 +36,10 @@ public class PasswordManager {
                 e.printStackTrace();
             }
         });
+    }
+
+    boolean matchPassword(UUID player, String password) throws AccountNonExistException {
+        return getPasswordHash(player).map(s -> s.equals(hashing(password))).orElseThrow(AccountNonExistException::new);
     }
 
     static String hashing(String password) {
@@ -102,40 +103,25 @@ public class PasswordManager {
         return false;
     }
 
-    String getPasswordHash(UUID uuid) {
-        return Optional.ofNullable(passwordMap.get(uuid)).orElseGet(() -> {
-            try {
-                Optional<String> str = this.getFromSQL(uuid).get();
-                if (str.isEmpty())
-                    ProxyServer.getInstance().getLogger().log(Level.SEVERE, "The password of " + uuid + " is null, maybe premium player? ");
-                else return str.get();
-            } catch (InterruptedException | ExecutionException e) {
-                ProxyServer.getInstance().getLogger().log(Level.SEVERE, "Error while getting " + uuid + " password: " + e.getLocalizedMessage());
-            }
-            return "";
-        });
+    Optional<String> getPasswordHash(UUID uuid) {
+        return Optional.ofNullable(passwordMap.get(uuid));
     }
 
 
-    CompletableFuture<Optional<String>> getFromSQL(UUID uuid) {
-        return CompletableFuture.supplyAsync(() -> {
-            if (passwordMap.containsKey(uuid)) {
-                return Optional.of(passwordMap.get(uuid));
+    void getFromSQL(UUID uuid) {
+        if (passwordMap.containsKey(uuid)) {
+            return;
+        }
+        try (Connection connection = sqlDataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT `Password` FROM `LoginData` WHERE `UUID`=?")) {
+            statement.setString(1, uuid.toString());
+            ResultSet set = statement.executeQuery();
+            if (set.next()) {
+                String pwHash = set.getString("Password");
+                this.passwordMap.put(uuid, pwHash);
             }
-            String result = null;
-            try (Connection connection = sqlDataSource.getConnection();
-                 PreparedStatement statement = connection.prepareStatement("SELECT `Password` FROM `LoginData` WHERE `UUID`=?")) {
-                statement.setString(1, uuid.toString());
-                ResultSet set = statement.executeQuery();
-                if (set.next()) {
-                    String pwHash = set.getString("Password");
-                    this.passwordMap.put(uuid, pwHash);
-                    result = pwHash;
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            return Optional.ofNullable(result);
-        });
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

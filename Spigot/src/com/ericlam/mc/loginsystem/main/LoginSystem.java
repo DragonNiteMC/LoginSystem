@@ -23,9 +23,8 @@ import java.util.logging.Level;
 
 public class LoginSystem extends JavaPlugin implements Listener {
 
-    private List<String> playersCommand;
-
-    private Set<UUID> uuids = new HashSet<>();
+    private final Set<UUID> uuids = new HashSet<>();
+    private List<String> permissions;
 
     private LuckPerms luckPerms;
 
@@ -35,7 +34,7 @@ public class LoginSystem extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        playersCommand = HyperNiteMC.getAPI().getFactory().getConfigFactory(this).register("lobby.yml", LoginConfig.class).dump().getConfigAs(LoginConfig.class).premiumPermissions;
+        permissions = HyperNiteMC.getAPI().getFactory().getConfigFactory(this).register("lobby.yml", LoginConfig.class).dump().getConfigAs(LoginConfig.class).premiumPermissions;
         luckPerms = LuckPermsProvider.get();
         this.getServer().getPluginManager().registerEvents(this, this);
         luckPerms.getEventBus().subscribe(UserLoadEvent.class, this::onUserLoad);
@@ -56,7 +55,7 @@ public class LoginSystem extends JavaPlugin implements Listener {
         if (!this.uuids.contains(e.getUser().getUniqueId())) return;
         boolean save = false;
         boolean success = true;
-        for (String perm : playersCommand) {
+        for (String perm : permissions) {
             Node node = Node.builder(perm)
                     .value(true)
                     .withContext(DefaultContextKeys.SERVER_KEY, "global")

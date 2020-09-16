@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class SessionManager {
     private final long sessionMins;
-    private Map<UUID, LocalDateTime> sessionMap = new ConcurrentHashMap<>();
+    private final Map<UUID, LocalDateTime> sessionMap = new ConcurrentHashMap<>();
 
     SessionManager(LoginConfig config) {
         this.sessionMins = config.sessionExpireMins;
@@ -24,10 +24,6 @@ class SessionManager {
 
     void addSession(UUID uuid) {
         this.sessionMap.put(uuid, LocalDateTime.now().plusMinutes(sessionMins));
-    }
-
-    void addPremiumSession(UUID uuid) {
-        this.sessionMap.put(uuid, LocalDateTime.of(9999, 12, 30, 12, 0));
     }
 
     void clearSession(UUID uuid) {
