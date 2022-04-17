@@ -1,9 +1,9 @@
 package com.ericlam.mc.loginsystem.bungee.commands;
 
-import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
-import com.ericlam.mc.bungee.hnmc.commands.caxerx.CommandNode;
-import com.ericlam.mc.bungee.hnmc.config.YamlManager;
-import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
+import com.ericlam.mc.bungee.dnmc.builders.MessageBuilder;
+import com.ericlam.mc.bungee.dnmc.commands.caxerx.CommandNode;
+import com.ericlam.mc.bungee.dnmc.config.YamlManager;
+import com.ericlam.mc.bungee.dnmc.main.DragonNiteMC;
 import com.ericlam.mc.loginsystem.bungee.LoginConfig;
 import com.ericlam.mc.loginsystem.bungee.LoginLang;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AuthException;
@@ -29,7 +29,7 @@ public abstract class AuthCommandNode extends CommandNode {
     @Override
     public void executeCommand(CommandSender commandSender, List<String> list) {
         if (!(commandSender instanceof ProxiedPlayer)) {
-            MessageBuilder.sendMessage(commandSender, HyperNiteMC.getAPI().getMainConfig().getNotPlayer());
+            MessageBuilder.sendMessage(commandSender, DragonNiteMC.getAPI().getMainConfig().getNotPlayer());
             return;
         }
         ProxiedPlayer player = (ProxiedPlayer) commandSender;

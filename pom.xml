@@ -22,8 +22,8 @@
 
     <repositories>
         <repository>
-            <id>hypernite</id>
-            <url>https://nexus.chu77.xyz/repository/developer/</url>
+            <id>dragonnite</id>
+            <url>https://nexus.pulogo.xyz/repository/developer/</url>
         </repository>
         <repository>
             <id>papermc</id>
@@ -56,27 +56,27 @@
                 <scope>provided</scope>
             </dependency>
             <dependency>
-                <groupId>com.destroystokyo.paper</groupId>
+                <groupId>io.papermc.paper</groupId>
                 <artifactId>paper-api</artifactId>
-                <version>1.16.3-R0.1-SNAPSHOT</version>
+                <version>1.18.2-R0.1-SNAPSHOT</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
-                <groupId>com.hypernite.mc</groupId>
+                <groupId>com.dragonnite.mc</groupId>
                 <artifactId>core-api</artifactId>
-                <version>7.6.4</version>
+                <version>7.6.5</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
-                <groupId>com.hypernite.mc</groupId>
+                <groupId>com.dragonnite.mc</groupId>
                 <artifactId>bungee-api</artifactId>
-                <version>2.6.2</version>
+                <version>2.6.3</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>waterfall</groupId>
-                <artifactId>1.16</artifactId>
-                <version>377</version>
+                <artifactId>1.18</artifactId>
+                <version>483</version>
                 <type>jar</type>
                 <scope>provided</scope>
             </dependency>

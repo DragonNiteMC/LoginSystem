@@ -1,10 +1,10 @@
 package com.ericlam.mc.loginsystem.bungee.commands.admin;
 
-import com.ericlam.mc.bungee.hnmc.commands.caxerx.CommandNode;
-import com.ericlam.mc.bungee.hnmc.commands.caxerx.DefaultCommand;
-import com.ericlam.mc.bungee.hnmc.commands.caxerx.DefaultCommandBuilder;
-import com.ericlam.mc.bungee.hnmc.config.YamlManager;
-import com.ericlam.mc.bungee.hnmc.permission.Perm;
+import com.ericlam.mc.bungee.dnmc.commands.caxerx.CommandNode;
+import com.ericlam.mc.bungee.dnmc.commands.caxerx.DefaultCommand;
+import com.ericlam.mc.bungee.dnmc.commands.caxerx.DefaultCommandBuilder;
+import com.ericlam.mc.bungee.dnmc.config.YamlManager;
+import com.ericlam.mc.bungee.dnmc.permission.Perm;
 import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
 
 public class LoginAdminCommand {

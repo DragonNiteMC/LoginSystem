@@ -2,4 +2,4 @@ name: LoginSystem
 main: com.ericlam.mc.loginsystem.bungee.main.LoginSystem
 version: ${project.version}
 author: Hydranapse_
-depends: [HyperNiteMC-Bungee]
+depends: [DragonNiteMC-Bungee]

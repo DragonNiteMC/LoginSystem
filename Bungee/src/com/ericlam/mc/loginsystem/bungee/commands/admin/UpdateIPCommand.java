@@ -1,9 +1,9 @@
 package com.ericlam.mc.loginsystem.bungee.commands.admin;
 
-import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
-import com.ericlam.mc.bungee.hnmc.config.YamlManager;
-import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
-import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
+import com.ericlam.mc.bungee.dnmc.builders.MessageBuilder;
+import com.ericlam.mc.bungee.dnmc.config.YamlManager;
+import com.ericlam.mc.bungee.dnmc.container.OfflinePlayer;
+import com.ericlam.mc.bungee.dnmc.main.DragonNiteMC;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AuthException;
 import com.ericlam.mc.loginsystem.bungee.managers.LoginManager;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -19,7 +19,7 @@ public class UpdateIPCommand extends AdminAuthNode {
     @Override
     public CompletableFuture<Boolean> execution(ProxiedPlayer player, List<String> list, OfflinePlayer target) throws AuthException {
         if (!target.isOnline()) {
-            MessageBuilder.sendMessage(player, HyperNiteMC.getAPI().getMainConfig().getNoThisPlayer());
+            MessageBuilder.sendMessage(player, DragonNiteMC.getAPI().getMainConfig().getNoThisPlayer());
             return CompletableFuture.completedFuture(false);
         }
         return loginManager.forceUpdateIP(target.getPlayer()).thenApplyAsync(ip -> {

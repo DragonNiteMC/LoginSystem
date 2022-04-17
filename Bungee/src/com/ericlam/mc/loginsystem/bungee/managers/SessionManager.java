@@ -1,7 +1,7 @@
 package com.ericlam.mc.loginsystem.bungee.managers;
 
 
-import com.ericlam.mc.bungee.hnmc.function.ResultParser;
+import com.ericlam.mc.bungee.dnmc.function.ResultParser;
 import com.ericlam.mc.loginsystem.bungee.LoginConfig;
 
 import java.time.LocalDateTime;

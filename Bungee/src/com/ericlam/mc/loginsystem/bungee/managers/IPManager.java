@@ -1,7 +1,7 @@
 package com.ericlam.mc.loginsystem.bungee.managers;
 
-import com.ericlam.mc.bungee.hnmc.SQLDataSource;
-import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
+import com.ericlam.mc.bungee.dnmc.SQLDataSource;
+import com.ericlam.mc.bungee.dnmc.main.DragonNiteMC;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.net.InetSocketAddress;
@@ -14,7 +14,7 @@ public class IPManager {
     private final SQLDataSource dataSource;
 
     public IPManager() {
-        this.dataSource = HyperNiteMC.getAPI().getSQLDataSource();
+        this.dataSource = DragonNiteMC.getAPI().getSQLDataSource();
     }
 
     public static String getIP(net.md_5.bungee.api.connection.Connection connection) {

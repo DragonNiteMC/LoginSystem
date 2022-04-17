@@ -2,4 +2,4 @@ name: LoginSystem
 version: ${project.version}
 author: Hydranapse_
 main: com.ericlam.mc.loginsystem.main.LoginSystem
-depend: [HyperNiteMC-Core, LuckPerms]
+depend: [DragonNiteMC-Core, LuckPerms]

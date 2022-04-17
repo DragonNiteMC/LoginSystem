@@ -1,7 +1,7 @@
 package com.ericlam.mc.loginsystem.main;
 
 import com.ericlam.mc.loginsystem.redis.ChannelListener;
-import com.hypernite.mc.hnmc.core.main.HyperNiteMC;
+import com.dragonnite.mc.dnmc.core.main.DragonNiteMC;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.context.DefaultContextKeys;
@@ -34,7 +34,7 @@ public class LoginSystem extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        permissions = HyperNiteMC.getAPI().getFactory().getConfigFactory(this).register("lobby.yml", LoginConfig.class).dump().getConfigAs(LoginConfig.class).premiumPermissions;
+        permissions = DragonNiteMC.getAPI().getFactory().getConfigFactory(this).register("lobby.yml", LoginConfig.class).dump().getConfigAs(LoginConfig.class).premiumPermissions;
         luckPerms = LuckPermsProvider.get();
         this.getServer().getPluginManager().registerEvents(this, this);
         luckPerms.getEventBus().subscribe(UserLoadEvent.class, this::onUserLoad);
@@ -42,7 +42,7 @@ public class LoginSystem extends JavaPlugin implements Listener {
     }
 
     private void launchRedis() {
-        try (Jedis jedis = HyperNiteMC.getAPI().getRedisDataSource().getJedis()) {
+        try (Jedis jedis = DragonNiteMC.getAPI().getRedisDataSource().getJedis()) {
             jedis.subscribe(new ChannelListener(this), "Login-Slave");
         } catch (JedisException e) {
             this.getLogger().log(Level.SEVERE, "無法連接到 Jedis: " + e.getLocalizedMessage());

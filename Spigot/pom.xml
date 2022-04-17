@@ -11,11 +11,11 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.destroystokyo.paper</groupId>
+            <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.hypernite.mc</groupId>
+            <groupId>com.dragonnite.mc</groupId>
             <artifactId>core-api</artifactId>
         </dependency>
         <dependency>

@@ -1,9 +1,9 @@
 package com.ericlam.mc.loginsystem.bungee.managers;
 
-import com.ericlam.mc.bungee.hnmc.builders.MessageBuilder;
-import com.ericlam.mc.bungee.hnmc.config.YamlManager;
-import com.ericlam.mc.bungee.hnmc.container.OfflinePlayer;
-import com.ericlam.mc.bungee.hnmc.function.ResultParser;
+import com.ericlam.mc.bungee.dnmc.builders.MessageBuilder;
+import com.ericlam.mc.bungee.dnmc.config.YamlManager;
+import com.ericlam.mc.bungee.dnmc.container.OfflinePlayer;
+import com.ericlam.mc.bungee.dnmc.function.ResultParser;
 import com.ericlam.mc.loginsystem.bungee.LoginConfig;
 import com.ericlam.mc.loginsystem.bungee.LoginLang;
 import com.ericlam.mc.loginsystem.bungee.events.PlayerLoggedEvent;

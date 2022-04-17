@@ -1,6 +1,6 @@
 package com.ericlam.mc.loginsystem.bungee.commands;
 
-import com.ericlam.mc.bungee.hnmc.config.YamlManager;
+import com.ericlam.mc.bungee.dnmc.config.YamlManager;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AlreadyLoggedException;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AuthException;
 import com.ericlam.mc.loginsystem.bungee.exceptions.MaxAccountReachedException;

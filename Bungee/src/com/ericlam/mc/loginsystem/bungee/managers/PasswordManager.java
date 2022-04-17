@@ -1,7 +1,7 @@
 package com.ericlam.mc.loginsystem.bungee.managers;
 
-import com.ericlam.mc.bungee.hnmc.SQLDataSource;
-import com.ericlam.mc.bungee.hnmc.main.HyperNiteMC;
+import com.ericlam.mc.bungee.dnmc.SQLDataSource;
+import com.ericlam.mc.bungee.dnmc.main.DragonNiteMC;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AccountNonExistException;
 import com.ericlam.mc.loginsystem.bungee.exceptions.AlreadyRegisteredException;
 import net.md_5.bungee.api.ProxyServer;
@@ -26,7 +26,7 @@ public class PasswordManager {
     private final Map<UUID, String> passwordMap = new ConcurrentHashMap<>();
 
     PasswordManager(Plugin plugin) {
-        this.sqlDataSource = HyperNiteMC.getAPI().getSQLDataSource();
+        this.sqlDataSource = DragonNiteMC.getAPI().getSQLDataSource();
         ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
             try (Connection connection = sqlDataSource.getConnection();
                  PreparedStatement statement = connection.prepareStatement(
